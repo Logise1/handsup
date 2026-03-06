@@ -623,22 +623,39 @@
                         Math.pow(qrCorners[1].y - qrCorners[0].y, 2)
                     );
 
-                    // On the printed A4: QR is 70px wide on a 210mm page
-                    // QR is at top-right: ~10mm from right edge, ~10mm from top
-                    // Page width ≈ qrSize * (210/18.5) — 18.5mm ≈ 70px at print scale
-                    const pageWidthEst = qrSize * (210 / 18.5);
-                    const pageHeightEst = pageWidthEst * (297 / 210);
+                    // Determine QR version
+                    const qrVersion = examData.v || 1;
 
-                    // Estimate page top-left corner
-                    // QR center is at approximately (pageWidth - 13mm, 13mm) from top-left
-                    const pageTLX = qrCX - (pageWidthEst * (210 - 13) / 210);
-                    const pageTLY = qrCY - (pageWidthEst * 13 / 210);
+                    // Physical size and offset of the QR center
+                    let printedQrSizeMM, qrCenterOffsetX, qrCenterOffsetY;
+                    if (qrVersion >= 2) {
+                        // v2: 100px QR -> ~26.46mm. Margin is 14mm. Center is ~27.23mm from edge.
+                        printedQrSizeMM = 26.46;
+                        qrCenterOffsetX = 27.23;
+                        qrCenterOffsetY = 27.23;
+                    } else {
+                        // v1: 70px QR -> ~18.5mm. Original logic used 13mm offset.
+                        printedQrSizeMM = 18.5;
+                        qrCenterOffsetX = 13.0; // Historically 13mm in v1
+                        qrCenterOffsetY = 13.0;
+                    }
 
-                    // Answer grid starts at approximately:
-                    // X: 14mm from left, Y: 75mm from top (after header+student+instructions)
-                    // Grid: 5 columns, each ~36mm wide
-                    // Each row: ~6mm tall
-                    // Bubble spacing: ~5mm between bubbles, number takes ~6mm
+                    const pageWidthEst = qrSize * (210 / printedQrSizeMM);
+
+                    // Did we scan Top-Right or Bottom-Left?
+                    // If QR center is on the right half of the image, we assume Top-Right.
+                    const isTopRight = qrCX > w / 2;
+                    let pageTLX, pageTLY;
+                    if (isTopRight) {
+                        pageTLX = qrCX - (pageWidthEst * (210 - qrCenterOffsetX) / 210);
+                        pageTLY = qrCY - (pageWidthEst * qrCenterOffsetY / 210);
+                    } else {
+                        // QR is Bottom-Left (from v1 prints)
+                        pageTLX = qrCX - (pageWidthEst * qrCenterOffsetX / 210);
+                        pageTLY = qrCY - (pageWidthEst * (297 - qrCenterOffsetY) / 210);
+                    }
+
+                    // Answer grid layout constants
                     const gridStartX = pageTLX + (pageWidthEst * 16 / 210);
                     const gridStartY = pageTLY + (pageWidthEst * 80 / 210);
                     const colWidth = pageWidthEst * 35 / 210;

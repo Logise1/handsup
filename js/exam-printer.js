@@ -72,10 +72,6 @@ const ExamPrinter = {
             <div class="exam-qr-corner exam-qr-top-right">
               <div id="qr-code-tr"></div>
             </div>
-            <!-- QR bottom-left -->
-            <div class="exam-qr-corner exam-qr-bottom-left">
-              <div id="qr-code-bl"></div>
-            </div>
 
             <div class="exam-sheet-header">
               <div class="exam-sheet-info">
@@ -130,24 +126,15 @@ const ExamPrinter = {
   },
 
   generateQRCodes() {
-    const qrData = JSON.stringify({ app: 'handsup', examId: this.examId, v: 1 });
+    const qrData = JSON.stringify({ app: 'handsup', examId: this.examId, v: 2 });
     if (typeof QRCode === 'undefined') return;
 
     // Top-right QR
     const trEl = document.getElementById('qr-code-tr');
     if (trEl) {
+      trEl.innerHTML = '';
       new QRCode(trEl, {
-        text: qrData, width: 70, height: 70,
-        colorDark: '#000000', colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    }
-
-    // Bottom-left QR
-    const blEl = document.getElementById('qr-code-bl');
-    if (blEl) {
-      new QRCode(blEl, {
-        text: qrData, width: 70, height: 70,
+        text: qrData, width: 100, height: 100,
         colorDark: '#000000', colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.M
       });
