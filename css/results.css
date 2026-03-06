@@ -1,0 +1,167 @@
+/* HandsUp — Results Styles */
+
+.results-filters {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+}
+
+.results-filters select {
+    min-width: 200px;
+}
+
+.results-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+.results-summary-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    text-align: center;
+}
+
+.results-summary-card .value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.02em;
+}
+
+.results-summary-card .label {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-top: var(--space-1);
+}
+
+.results-summary-card.highlight .value {
+    color: var(--primary);
+}
+
+.grade-cell {
+    font-weight: 700;
+}
+
+.grade-cell.pass {
+    color: var(--success);
+}
+
+.grade-cell.fail {
+    color: var(--danger);
+}
+
+.correct-cell {
+    color: var(--success);
+    font-weight: 600;
+}
+
+.incorrect-cell {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.result-detail-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    margin-bottom: var(--space-4);
+}
+
+.result-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border);
+}
+
+.result-student-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.result-grade-display {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.result-grade-display.pass {
+    background: var(--success-light);
+    color: var(--success-dark);
+}
+
+.result-grade-display.fail {
+    background: var(--danger-light);
+    color: var(--danger-dark);
+}
+
+.result-answers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--space-2);
+}
+
+.result-answer-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
+}
+
+.result-answer-item.correct {
+    background: var(--success-light);
+}
+
+.result-answer-item.incorrect {
+    background: var(--danger-light);
+}
+
+.result-answer-item .ra-num {
+    font-weight: 700;
+    min-width: 20px;
+}
+
+.result-answer-item .ra-answer {
+    font-weight: 600;
+}
+
+.result-answer-item.correct .ra-answer {
+    color: var(--success-dark);
+}
+
+.result-answer-item.incorrect .ra-answer {
+    color: var(--danger-dark);
+}
+
+@media (max-width: 768px) {
+    .results-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .results-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .results-filters select {
+        min-width: auto;
+    }
+}

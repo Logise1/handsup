@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escanear — HandsUp Mobile</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/scan.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✋</text></svg>">
+    <style>
+        body {
+            background: var(--bg-alt);
+        }
+
+        .mobile-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: var(--space-4);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mobile-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-3);
+            padding: var(--space-4) 0;
+        }
+
+        .mobile-header h1 {
+            font-size: 1.25rem;
+        }
+
+        .mobile-logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #2563EB, #1D4ED8);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .session-badge {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-4);
+            background: var(--success-light);
+            color: var(--success-dark);
+            border-radius: var(--radius-full);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            justify-content: center;
+            margin-bottom: var(--space-4);
+        }
+
+        .session-badge .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .mobile-camera {
+            background: #0F172A;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            aspect-ratio: 3/4;
+            position: relative;
+            margin-bottom: var(--space-4);
+        }
+
+        .mobile-camera video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mobile-camera canvas {
+            display: none;
+        }
+
+        .mobile-scan-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-scan-frame {
+            width: 220px;
+            height: 220px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: var(--radius-lg);
+            position: relative;
+        }
+
+        .mobile-scan-frame::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            width: 40px;
+            height: 40px;
+            border-top: 3px solid var(--primary);
+            border-left: 3px solid var(--primary);
+            border-radius: 6px 0 0 0;
+        }
+
+        .mobile-scan-frame::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 40px;
+            height: 40px;
+            border-top: 3px solid var(--primary);
+            border-right: 3px solid var(--primary);
+            border-radius: 0 6px 0 0;
+        }
+
+        .msf-bottom::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: -2px;
+            width: 40px;
+            height: 40px;
+            border-bottom: 3px solid var(--primary);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 0 0 6px;
+        }
+
+        .msf-bottom::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 40px;
+            height: 40px;
+            border-bottom: 3px solid var(--primary);
+            border-right: 3px solid var(--primary);
+            border-radius: 0 0 6px 0;
+        }
+
+        .mobile-scan-line {
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 12px var(--accent-glow);
+            animation: scanLine 2s ease-in-out infinite;
+        }
+
+        @keyframes scanLine {
+
+            0%,
+            100% {
+                top: 10px;
+            }
+
+            50% {
+                top: calc(100% - 12px);
+            }
+        }
+
+        .mobile-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.5);
+            gap: var(--space-3);
+        }
+
+        .mobile-placeholder svg {
+            width: 48px;
+            height: 48px;
+        }
+
+        .result-flash {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            margin-bottom: var(--space-3);
+            animation: bounceIn 0.5s ease-out;
+        }
+
+        .result-flash-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+        }
+
+        .result-flash-grade {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.125rem;
+            font-weight: 800;
+        }
+
+        .result-flash-grade.pass {
+            background: var(--success-light);
+            color: var(--success-dark);
+        }
+
+        .result-flash-grade.fail {
+            background: var(--danger-light);
+            color: var(--danger-dark);
+        }
+
+        .result-flash-info h4 {
+            font-size: 0.9375rem;
+            margin-bottom: 2px;
+        }
+
+        .result-flash-info p {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .result-flash-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: var(--space-2);
+            text-align: center;
+        }
+
+        .result-flash-stat {
+            padding: var(--space-2);
+            background: var(--surface);
+            border-radius: var(--radius-md);
+        }
+
+        .result-flash-stat .val {
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+
+        .result-flash-stat .lbl {
+            font-size: 0.6875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .result-flash-stat.good .val {
+            color: var(--success);
+        }
+
+        .result-flash-stat.bad .val {
+            color: var(--danger);
+        }
+
+        .results-list {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            overflow-y: auto;
+        }
+
+        .error-state {
+            text-align: center;
+            padding: var(--space-12);
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .scan-btn-container {
+            position: sticky;
+            bottom: var(--space-4);
+            padding-top: var(--space-3);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mobile-container">
+        <div class="mobile-header">
+            <div class="mobile-logo">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                </svg>
+            </div>
+            <h1>Hands<span style="color:var(--primary)">Up</span> Scanner</h1>
+        </div>
+
+        <div class="session-badge" id="session-status">
+            <span class="dot"></span>
+            <span id="session-text">Conectando sesión...</span>
+        </div>
+
+        <!-- Camera -->
+        <div class="mobile-camera" id="camera-area">
+            <video id="mobile-video" playsinline autoplay muted></video>
+            <canvas id="mobile-canvas"></canvas>
+            <div class="mobile-scan-overlay hidden" id="scan-overlay-el">
+                <div class="mobile-scan-frame">
+                    <div class="msf-bottom"></div>
+                    <div class="mobile-scan-line"></div>
+                </div>
+            </div>
+            <div class="mobile-placeholder" id="mobile-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                </svg>
+                <p>Toca el botón para escanear</p>
+            </div>
+        </div>
+
+        <!-- Scan button -->
+        <div class="scan-btn-container">
+            <button class="btn btn-primary btn-lg w-full" id="btn-mobile-scan" onclick="MobileScanner.toggleScan()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                </svg>
+                <span id="scan-btn-text">Escanear examen</span>
+            </button>
+        </div>
+
+        <!-- Results List (appear instantly) -->
+        <div class="results-list" id="results-list"></div>
+
+        <!-- Error State -->
+        <div class="error-state hidden" id="error-state">
+            <p>Sesión no válida o expirada</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        const MobileScanner = {
+            token: null,
+            session: null,
+            stream: null,
+            scanning: false,
+            scannedResults: [],
+
+            async init() {
+                const params = new URLSearchParams(window.location.search);
+                this.token = params.get('token');
+                if (!this.token) {
+                    this.showError('No se proporcionó token de sesión');
+                    return;
+                }
+                // Validate session token
+                try {
+                    const snap = await db.collection('handsup_scan_sessions').where('token', '==', this.token).where('active', '==', true).limit(1).get();
+                    if (snap.empty) {
+                        this.showError('Sesión expirada o no válida');
+                        return;
+                    }
+                    const doc = snap.docs[0];
+                    this.session = { id: doc.id, ...doc.data() };
+                    document.getElementById('session-text').textContent = 'Sesión activa — ' + (this.session.userName || 'Profesor');
+                    // Listen for session changes (deactivation)
+                    db.collection('handsup_scan_sessions').doc(doc.id).onSnapshot(snap => {
+                        if (!snap.exists || !snap.data().active) {
+                            this.showError('Sesión cerrada por el profesor');
+                        }
+                    });
+                } catch (err) {
+                    console.error(err);
+                    this.showError('Error al validar sesión');
+                }
+            },
+
+            showError(msg) {
+                document.getElementById('session-status').innerHTML = `<span style="color:var(--danger)">✕</span><span>${msg}</span>`;
+                document.getElementById('session-status').style.background = 'var(--danger-light)';
+                document.getElementById('session-status').style.color = 'var(--danger-dark)';
+                document.getElementById('error-state').classList.remove('hidden');
+                document.getElementById('btn-mobile-scan').disabled = true;
+                document.getElementById('btn-mobile-scan').style.opacity = '0.5';
+            },
+
+            async toggleScan() {
+                if (this.scanning) {
+                    this.stopScan();
+                } else {
+                    await this.startScan();
+                }
+            },
+
+            async startScan() {
+                try {
+                    this.stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 960 } }
+                    });
+                    const video = document.getElementById('mobile-video');
+                    video.srcObject = this.stream;
+                    video.play();
+                    document.getElementById('mobile-placeholder').classList.add('hidden');
+                    document.getElementById('scan-overlay-el').classList.remove('hidden');
+                    document.getElementById('scan-btn-text').textContent = 'Detener';
+                    this.scanning = true;
+                    this.scanLoop();
+                } catch (err) {
+                    Utils.showToast('No se pudo abrir la cámara', 'error');
+                }
+            },
+
+            stopScan() {
+                this.scanning = false;
+                if (this.stream) {
+                    this.stream.getTracks().forEach(t => t.stop());
+                    this.stream = null;
+                }
+                document.getElementById('mobile-video').srcObject = null;
+                document.getElementById('mobile-placeholder').classList.remove('hidden');
+                document.getElementById('scan-overlay-el').classList.add('hidden');
+                document.getElementById('scan-btn-text').textContent = 'Escanear examen';
+            },
+
+            scanLoop() {
+                if (!this.scanning) return;
+                const video = document.getElementById('mobile-video');
+                const canvas = document.getElementById('mobile-canvas');
+                if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+                    requestAnimationFrame(() => this.scanLoop());
+                    return;
+                }
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                if (typeof jsQR !== 'undefined') {
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    if (code) {
+                        try {
+                            const data = JSON.parse(code.data);
+                            if (data.app === 'handsup' && data.examId) {
+                                // Avoid re-scanning same exam
+                                if (this.lastScannedId === data.examId && Date.now() - this.lastScannedTime < 5000) {
+                                    requestAnimationFrame(() => this.scanLoop());
+                                    return;
+                                }
+                                this.lastScannedId = data.examId;
+                                this.lastScannedTime = Date.now();
+                                navigator.vibrate?.(200);
+                                this.processExam(data.examId);
+                            }
+                        } catch (e) { /* not our QR */ }
+                    }
+                }
+                requestAnimationFrame(() => this.scanLoop());
+            },
+
+            async processExam(examId) {
+                try {
+                    const doc = await db.collection('handsup_exams').doc(examId).get();
+                    if (!doc.exists) {
+                        Utils.showToast('Examen no encontrado', 'error');
+                        return;
+                    }
+                    const examData = { id: examId, ...doc.data() };
+
+                    // Load students for that class
+                    let students = [];
+                    if (examData.classId) {
+                        const classDoc = await db.collection('handsup_classes').doc(examData.classId).get();
+                        if (classDoc.exists) students = classDoc.data().students || [];
+                    }
+
+                    // Show quick-answer modal
+                    this.showAnswerModal(examData, students);
+                } catch (err) {
+                    Utils.showToast('Error: ' + err.message, 'error');
+                }
+            },
+
+            showAnswerModal(exam, students) {
+                const letters = ['A', 'B', 'C', 'D'];
+                const answers = {};
+
+                // Create modal
+                let modal = document.getElementById('answer-modal');
+                if (modal) modal.remove();
+
+                modal = document.createElement('div');
+                modal.id = 'answer-modal';
+                modal.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:999;overflow-y:auto;padding:var(--space-4);animation:fadeInUp 0.3s ease-out;';
+                modal.innerHTML = `
+          <div style="max-width:500px;margin:0 auto;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4);">
+              <h3 style="font-size:1.125rem;">${Utils.escapeHtml(exam.title)}</h3>
+              <button class="btn btn-ghost btn-icon" onclick="document.getElementById('answer-modal').remove()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div style="margin-bottom:var(--space-4);">
+              <label style="font-size:0.875rem;font-weight:600;margin-bottom:var(--space-2);display:block;">Alumno:</label>
+              <select class="input" id="modal-student-select">
+                <option value="">Selecciona alumno</option>
+                ${students.map(s => `<option value="${s.id}" data-name="${Utils.escapeHtml(s.name)}">${Utils.escapeHtml(s.name)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="answer-input-grid" id="modal-answer-grid">
+              ${exam.questions.map((q, i) => `
+                <div class="answer-input-item">
+                  <span class="q-label">${i + 1}</span>
+                  <div class="answer-options">
+                    ${letters.map((l, j) => `<button class="answer-option-btn" data-q="${i}" data-o="${j}" onclick="MobileScanner.tmpSelectAnswer(${i},${j},this)">${l}</button>`).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            <button class="btn btn-primary btn-lg w-full mt-6" onclick="MobileScanner.submitMobileAnswers()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Corregir y guardar
+            </button>
+          </div>
+        `;
+                document.body.appendChild(modal);
+
+                this.tmpExam = exam;
+                this.tmpAnswers = {};
+            },
+
+            tmpSelectAnswer(qIndex, oIndex, btn) {
+                const siblings = btn.parentElement.querySelectorAll('.answer-option-btn');
+                siblings.forEach(s => s.classList.remove('selected'));
+                btn.classList.add('selected');
+                this.tmpAnswers[qIndex] = oIndex;
+            },
+
+            async submitMobileAnswers() {
+                if (!this.tmpExam || !this.session) return;
+                const select = document.getElementById('modal-student-select');
+                const studentId = select?.value;
+                const studentName = select?.options[select.selectedIndex]?.dataset.name || select?.options[select.selectedIndex]?.text;
+                if (!studentId) { Utils.showToast('Selecciona un alumno', 'error'); return; }
+
+                const total = this.tmpExam.questions.length;
+                const ansArr = [];
+                let correct = 0;
+                for (let i = 0; i < total; i++) {
+                    const a = this.tmpAnswers[i] !== undefined ? this.tmpAnswers[i] : -1;
+                    ansArr.push(a);
+                    if (a === this.tmpExam.questions[i].correct) correct++;
+                }
+                const incorrect = total - correct;
+                const grade = Utils.calculateGrade(correct, total);
+
+                // Show correct/incorrect on buttons
+                const btns = document.querySelectorAll('#modal-answer-grid .answer-option-btn');
+                btns.forEach(btn => {
+                    const q = parseInt(btn.dataset.q);
+                    const o = parseInt(btn.dataset.o);
+                    btn.classList.remove('selected');
+                    if (o === this.tmpExam.questions[q].correct) btn.classList.add('correct');
+                    else if (ansArr[q] === o) btn.classList.add('incorrect');
+                });
+
+                // Save result to Firebase
+                try {
+                    await db.collection('handsup_results').add({
+                        examId: this.tmpExam.id,
+                        examTitle: this.tmpExam.title,
+                        classId: this.tmpExam.classId || '',
+                        studentId, studentName,
+                        answers: ansArr, correct, incorrect, grade, total,
+                        userId: this.session.userId,
+                        sessionId: this.session.id,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    Utils.showToast(`${studentName}: ${grade}/10`, 'success');
+
+                    // Add to results list
+                    setTimeout(() => {
+                        document.getElementById('answer-modal')?.remove();
+                        this.addResultCard({ studentName, correct, incorrect, total, grade, examTitle: this.tmpExam.title });
+                    }, 1500);
+                } catch (err) {
+                    Utils.showToast('Error al guardar: ' + err.message, 'error');
+                }
+            },
+
+            addResultCard(r) {
+                const list = document.getElementById('results-list');
+                const gradeClass = r.grade >= 5 ? 'pass' : 'fail';
+                const card = document.createElement('div');
+                card.className = 'result-flash';
+                card.innerHTML = `
+          <div class="result-flash-header">
+            <div class="result-flash-grade ${gradeClass}">${r.grade.toFixed(2)}</div>
+            <div class="result-flash-info">
+              <h4>${Utils.escapeHtml(r.studentName)}</h4>
+              <p>${Utils.escapeHtml(r.examTitle)}</p>
+            </div>
+          </div>
+          <div class="result-flash-stats">
+            <div class="result-flash-stat good"><div class="val">${r.correct}</div><div class="lbl">Correctas</div></div>
+            <div class="result-flash-stat bad"><div class="val">${r.incorrect}</div><div class="lbl">Incorrectas</div></div>
+            <div class="result-flash-stat"><div class="val">${r.total}</div><div class="lbl">Total</div></div>
+          </div>
+        `;
+                list.prepend(card);
+                this.scannedResults.push(r);
+            }
+        };
+
+        MobileScanner.init();
+    </script>
+</body>
+
+</html>

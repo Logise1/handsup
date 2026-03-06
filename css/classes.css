@@ -1,0 +1,156 @@
+/* HandsUp — Classes Management Styles */
+
+.classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-5);
+}
+
+.class-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-base);
+}
+
+.class-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.class-card-header {
+    padding: var(--space-5) var(--space-6);
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+}
+
+.class-card-header h3 {
+    color: white;
+    font-size: 1.125rem;
+    margin-bottom: var(--space-1);
+}
+
+.class-card-header p {
+    font-size: 0.8125rem;
+    opacity: 0.85;
+}
+
+.class-card-body {
+    padding: var(--space-5) var(--space-6);
+}
+
+.class-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) 0;
+}
+
+.class-stat-row+.class-stat-row {
+    border-top: 1px solid var(--border-light);
+}
+
+.class-stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.class-stat-value {
+    font-weight: 700;
+    color: var(--text);
+}
+
+.class-card-footer {
+    padding: var(--space-3) var(--space-6);
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: var(--space-2);
+    justify-content: flex-end;
+}
+
+.add-class-card {
+    background: var(--bg);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    color: var(--text-secondary);
+}
+
+.add-class-card:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(37, 99, 235, 0.02);
+}
+
+.add-class-card svg {
+    width: 32px;
+    height: 32px;
+}
+
+.add-class-card p {
+    font-weight: 600;
+}
+
+.students-list {
+    margin-top: var(--space-4);
+}
+
+.student-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.student-item:last-child {
+    border-bottom: none;
+}
+
+.student-item-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.student-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-lighter), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.8125rem;
+}
+
+.student-name {
+    font-weight: 500;
+    font-size: 0.9375rem;
+}
+
+.add-student-row {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+}
+
+.add-student-row input {
+    flex: 1;
+}
+
+@media (max-width: 640px) {
+    .classes-grid {
+        grid-template-columns: 1fr;
+    }
+}

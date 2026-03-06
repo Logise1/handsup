@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HandsUp — Exámenes Inteligentes con IA</title>
+  <meta name="description"
+    content="Crea, imprime y corrige exámenes tipo test con inteligencia artificial. Escanea con el móvil y obtén resultados al instante.">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/landing.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✋</text></svg>">
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="landing-nav" id="landing-nav">
+    <div class="navbar-brand">
+      <div
+        style="width:34px;height:34px;background:linear-gradient(135deg,#2563EB,#1D4ED8);border-radius:8px;display:flex;align-items:center;justify-content:center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
+          stroke-linecap="round">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="9" y1="15" x2="15" y2="15" />
+        </svg>
+      </div>
+      Hands<span style="color:#2563EB">Up</span>
+    </div>
+    <div class="landing-nav-links">
+      <a href="#features">Funciones</a>
+      <a href="#how-it-works">Cómo funciona</a>
+      <button class="btn btn-primary" id="nav-btn-start" onclick="showAuthModal()">Comenzar</button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          </svg>
+          Potenciado con IA
+        </div>
+        <h1 class="hero-title">
+          Crea exámenes <br><span class="highlight">inteligentes</span><br>en segundos
+        </h1>
+        <p class="hero-description">
+          Genera exámenes con inteligencia artificial, imprímelos con códigos QR y corrígelos escaneando con tu móvil.
+          Todo automático.
+        </p>
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-lg" onclick="showAuthModal()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            Empezar gratis
+          </button>
+          <button class="btn btn-secondary"
+            onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polygon points="10 8 16 12 10 16 10 8" />
+            </svg>
+            Ver demo
+          </button>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <h4>10s</h4>
+            <p>Generar examen</p>
+          </div>
+          <div class="hero-stat">
+            <h4>1 clic</h4>
+            <p>Escanear y corregir</p>
+          </div>
+          <div class="hero-stat">
+            <h4>100%</h4>
+            <p>Automático</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3D Hero Visual -->
+      <div class="hero-visual">
+        <div class="hero-3d-scene">
+          <div class="hero-card hero-card-main">
+            <div class="hero-card-header">
+              <h4>Examen de Matemáticas</h4>
+              <p>10 preguntas · Nivel medio</p>
+            </div>
+            <div class="hero-card-body">
+              <div class="hero-card-question">
+                <div class="q-num">Pregunta 1</div>
+                <div class="q-text">¿Cuál es la raíz cuadrada de 144?</div>
+                <div class="hero-card-options">
+                  <span class="hero-card-option">A) 10</span>
+                  <span class="hero-card-option correct">B) 12</span>
+                  <span class="hero-card-option">C) 14</span>
+                  <span class="hero-card-option">D) 16</span>
+                </div>
+              </div>
+              <div class="hero-card-question">
+                <div class="q-num">Pregunta 2</div>
+                <div class="q-text">Si x + 5 = 12, ¿cuánto vale x?</div>
+                <div class="hero-card-options">
+                  <span class="hero-card-option">A) 5</span>
+                  <span class="hero-card-option correct">B) 7</span>
+                  <span class="hero-card-option">C) 8</span>
+                  <span class="hero-card-option">D) 12</span>
+                </div>
+              </div>
+              <div class="hero-card-question">
+                <div class="q-num">Pregunta 3</div>
+                <div class="q-text">¿Cuánto es 3³?</div>
+                <div class="hero-card-options">
+                  <span class="hero-card-option">A) 9</span>
+                  <span class="hero-card-option">B) 18</span>
+                  <span class="hero-card-option correct">C) 27</span>
+                  <span class="hero-card-option">D) 81</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="hero-card hero-card-secondary">
+            <div class="hero-card-header" style="background:linear-gradient(135deg,#059669,#047857)">
+              <h4>Ciencias Naturales</h4>
+              <p>15 preguntas</p>
+            </div>
+            <div class="hero-card-body">
+              <div class="hero-card-question">
+                <div class="q-num">Pregunta 1</div>
+                <div class="q-text">¿Cuál es el planeta más cercano al Sol?</div>
+              </div>
+              <div class="hero-card-question">
+                <div class="q-num">Pregunta 2</div>
+                <div class="q-text">El agua está compuesta por...</div>
+              </div>
+            </div>
+          </div>
+          <div class="hero-card hero-card-tertiary">
+            <div class="hero-card-header" style="background:linear-gradient(135deg,#7C3AED,#6D28D9)">
+              <h4>Historia</h4>
+              <p>8 preguntas</p>
+            </div>
+            <div class="hero-card-body">
+              <div class="hero-card-question">
+                <div class="q-num">Pregunta 1</div>
+                <div class="q-text">¿En qué año se descubrió América?</div>
+              </div>
+            </div>
+          </div>
+          <!-- Floating elements -->
+          <div class="floating-element floating-qr">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="1.5">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+              <rect x="14" y="14" width="3" height="3" />
+              <line x1="21" y1="14" x2="21" y2="21" />
+              <line x1="14" y1="21" x2="21" y2="21" />
+            </svg>
+          </div>
+          <div class="floating-element floating-check">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <div class="floating-element floating-grade">✨ 9.50/10</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="section-header">
+      <span class="overline">Funcionalidades</span>
+      <h2>Todo lo que necesitas para gestionar tus exámenes</h2>
+      <p>Desde la creación con IA hasta la corrección automática, HandsUp simplifica todo el proceso</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          </svg>
+        </div>
+        <h3>Generación con IA</h3>
+        <p>Introduce el tema y la asignatura, y la IA genera preguntas de calidad con diferentes niveles de dificultad.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9" />
+            <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
+          </svg>
+        </div>
+        <h3>Imprime con QR</h3>
+        <p>Cada examen incluye un código QR y marcas de esquina para identificación y corrección automática.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+        </div>
+        <h3>Escaneo Instantáneo</h3>
+        <p>Pon el móvil encima del examen, escanea el QR y el sistema detecta automáticamente el examen.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 00-3-3.87" />
+            <path d="M16 3.13a4 4 0 010 7.75" />
+          </svg>
+        </div>
+        <h3>Gestión de Clases</h3>
+        <p>Crea tus clases, añade alumnos y organiza los exámenes por grupo de forma intuitiva.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+        </div>
+        <h3>Corrección Automática</h3>
+        <p>Las respuestas se comparan con la clave, calculando nota sobre 10 con 2 decimales al instante.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+        </div>
+        <h3>Resultados Detallados</h3>
+        <p>Visualiza correctas, incorrectas y nota de cada alumno. Filtra por clase o examen.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="section-header">
+      <span class="overline">Proceso</span>
+      <h2>Cómo funciona HandsUp</h2>
+      <p>En 4 simples pasos, del tema a las notas</p>
+    </div>
+    <div class="steps-container">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h3>Introduce el tema</h3>
+          <p>Escribe la asignatura y el tema. La IA de Mistral generará preguntas tipo test profesionales adaptadas al
+            nivel de dificultad que elijas.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h3>Imprime el examen</h3>
+          <p>El examen se genera con códigos QR en las esquinas y una hoja de respuestas. Solo dale a imprimir y reparte
+            a tus alumnos.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h3>Escanea con el móvil</h3>
+          <p>Pon tu móvil encima del examen y pulsa escanear. El QR identifica el examen automáticamente. Marca las
+            respuestas del alumno con un toque.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <h3>Notas al instante</h3>
+          <p>Las notas se calculan automáticamente sobre 10 con 2 decimales. Consulta los resultados de cada alumno,
+            correctas e incorrectas.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="cta-card">
+      <h2>Empieza a crear exámenes inteligentes hoy</h2>
+      <p>Únete a HandsUp y ahorra horas en la creación y corrección de exámenes</p>
+      <button class="btn btn-lg" onclick="showAuthModal()">Crear cuenta gratis</button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <p>© 2026 HandsUp — Exámenes Inteligentes con IA</p>
+  </footer>
+
+  <!-- Auth Modal -->
+  <div class="modal-backdrop" id="auth-modal-backdrop" onclick="closeAuthModal()"></div>
+  <div class="modal" id="auth-modal">
+    <div class="modal-header">
+      <h3>Bienvenido a HandsUp</h3>
+      <button class="modal-close" onclick="closeAuthModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Iniciar sesión</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Registrarse</button>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <!-- Login Form -->
+    <form class="auth-form" id="login-form" onsubmit="handleLogin(event)">
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" class="input" id="login-email" placeholder="tu@email.com" required>
+      </div>
+      <div class="input-group">
+        <label>Contraseña</label>
+        <input type="password" class="input" id="login-password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg w-full">Iniciar sesión</button>
+    </form>
+    <!-- Register Form -->
+    <form class="auth-form hidden" id="register-form" onsubmit="handleRegister(event)">
+      <div class="input-group">
+        <label>Nombre</label>
+        <input type="text" class="input" id="register-name" placeholder="Tu nombre" required>
+      </div>
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" class="input" id="register-email" placeholder="tu@email.com" required>
+      </div>
+      <div class="input-group">
+        <label>Contraseña</label>
+        <input type="password" class="input" id="register-password" placeholder="Mínimo 6 caracteres" required
+          minlength="6">
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg w-full">Crear cuenta</button>
+    </form>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Check if already authenticated
+    auth.onAuthStateChanged(user => {
+      if (user) window.location.href = 'dashboard.html';
+    });
+
+    // Nav scroll effect
+    window.addEventListener('scroll', () => {
+      document.getElementById('landing-nav').classList.toggle('scrolled', window.scrollY > 20);
+    });
+
+    // 3D Mouse-following parallax effect
+    (function () {
+      const scene = document.querySelector('.hero-3d-scene');
+      if (!scene) return;
+      const mainCard = scene.querySelector('.hero-card-main');
+      const secCard = scene.querySelector('.hero-card-secondary');
+      const terCard = scene.querySelector('.hero-card-tertiary');
+      const floats = scene.querySelectorAll('.floating-element');
+
+      let targetRotX = 5, targetRotY = -12;
+      let currentRotX = 5, currentRotY = -12;
+      let animating = true;
+
+      scene.addEventListener('mousemove', (e) => {
+        const rect = scene.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top) / rect.height;
+        targetRotX = (y - 0.5) * -20;
+        targetRotY = (x - 0.5) * 20;
+      });
+
+      scene.addEventListener('mouseleave', () => {
+        targetRotX = 5;
+        targetRotY = -12;
+      });
+
+      function animate() {
+        currentRotX += (targetRotX - currentRotX) * 0.08;
+        currentRotY += (targetRotY - currentRotY) * 0.08;
+        if (mainCard) {
+          mainCard.style.transform = `translateX(-50%) rotateX(${currentRotX}deg) rotateY(${currentRotY}deg)`;
+        }
+        if (secCard) {
+          secCard.style.transform = `rotateX(${currentRotX * 0.6}deg) rotateY(${currentRotY * 0.6 - 15}deg) translateZ(-50px)`;
+        }
+        if (terCard) {
+          terCard.style.transform = `rotateX(${currentRotX * 0.4}deg) rotateY(${currentRotY * 0.4 + 10}deg) translateZ(-80px)`;
+        }
+        floats.forEach((f, i) => {
+          const offsetX = currentRotY * (1.5 + i * 0.5);
+          const offsetY = currentRotX * (1.5 + i * 0.5);
+          f.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+        });
+        if (animating) requestAnimationFrame(animate);
+      }
+      animate();
+    })();
+
+    // Auth modal functions
+    function showAuthModal() {
+      Utils.openModal('auth-modal');
+    }
+    function closeAuthModal() {
+      Utils.closeModal('auth-modal');
+    }
+    function switchAuthTab(tab) {
+      document.querySelectorAll('.auth-tab').forEach((t, i) => {
+        t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'register' && i === 1));
+      });
+      document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+      document.getElementById('auth-error').classList.remove('visible');
+    }
+    function showAuthError(msg) {
+      const el = document.getElementById('auth-error');
+      el.textContent = msg;
+      el.classList.add('visible');
+    }
+    async function handleLogin(e) {
+      e.preventDefault();
+      try {
+        await Auth.signIn(
+          document.getElementById('login-email').value,
+          document.getElementById('login-password').value
+        );
+        window.location.href = 'dashboard.html';
+      } catch (err) { showAuthError(err.message); }
+    }
+    async function handleRegister(e) {
+      e.preventDefault();
+      try {
+        await Auth.signUp(
+          document.getElementById('register-email').value,
+          document.getElementById('register-password').value,
+          document.getElementById('register-name').value
+        );
+        window.location.href = 'dashboard.html';
+      } catch (err) { showAuthError(err.message); }
+    }
+  </script>
+</body>
+
+</html>
