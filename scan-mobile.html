@@ -3,346 +3,511 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escanear — HandsUp Mobile</title>
-    <link rel="stylesheet" href="css/common.css">
-    <link rel="stylesheet" href="css/scan.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Escanear — HandsUp</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✋</text></svg>">
+    <link rel="stylesheet" href="css/common.css">
     <style>
-        body {
-            background: var(--bg-alt);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .mobile-container {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: var(--space-4);
-            min-height: 100vh;
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* ── Fullscreen Camera ── */
+        .scanner-fullscreen {
+            position: fixed;
+            inset: 0;
+            background: #000;
             display: flex;
             flex-direction: column;
         }
 
-        .mobile-header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-3);
-            padding: var(--space-4) 0;
-        }
-
-        .mobile-header h1 {
-            font-size: 1.25rem;
-        }
-
-        .mobile-logo {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, #2563EB, #1D4ED8);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .session-badge {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-2) var(--space-4);
-            background: var(--success-light);
-            color: var(--success-dark);
-            border-radius: var(--radius-full);
-            font-size: 0.8125rem;
-            font-weight: 600;
-            justify-content: center;
-            margin-bottom: var(--space-4);
-        }
-
-        .session-badge .dot {
-            width: 6px;
-            height: 6px;
-            background: var(--success);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        .mobile-camera {
-            background: #0F172A;
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            aspect-ratio: 3/4;
-            position: relative;
-            margin-bottom: var(--space-4);
-        }
-
-        .mobile-camera video {
+        .scanner-fullscreen video {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .mobile-camera canvas {
+        .scanner-fullscreen canvas {
             display: none;
         }
 
-        .mobile-scan-overlay {
+        /* ── Scan frame overlay ── */
+        .scan-hud {
             position: absolute;
             inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .mobile-scan-frame {
-            width: 220px;
-            height: 220px;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: var(--radius-lg);
-            position: relative;
-        }
-
-        .mobile-scan-frame::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            width: 40px;
-            height: 40px;
-            border-top: 3px solid var(--primary);
-            border-left: 3px solid var(--primary);
-            border-radius: 6px 0 0 0;
-        }
-
-        .mobile-scan-frame::after {
-            content: '';
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            width: 40px;
-            height: 40px;
-            border-top: 3px solid var(--primary);
-            border-right: 3px solid var(--primary);
-            border-radius: 0 6px 0 0;
-        }
-
-        .msf-bottom::before {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: -2px;
-            width: 40px;
-            height: 40px;
-            border-bottom: 3px solid var(--primary);
-            border-left: 3px solid var(--primary);
-            border-radius: 0 0 0 6px;
-        }
-
-        .msf-bottom::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            right: -2px;
-            width: 40px;
-            height: 40px;
-            border-bottom: 3px solid var(--primary);
-            border-right: 3px solid var(--primary);
-            border-radius: 0 0 6px 0;
-        }
-
-        .mobile-scan-line {
-            position: absolute;
-            left: 10px;
-            right: 10px;
-            height: 2px;
-            background: var(--primary);
-            box-shadow: 0 0 12px var(--accent-glow);
-            animation: scanLine 2s ease-in-out infinite;
-        }
-
-        @keyframes scanLine {
-
-            0%,
-            100% {
-                top: 10px;
-            }
-
-            50% {
-                top: calc(100% - 12px);
-            }
-        }
-
-        .mobile-placeholder {
-            position: absolute;
-            inset: 0;
+            pointer-events: none;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: rgba(255, 255, 255, 0.5);
-            gap: var(--space-3);
         }
 
-        .mobile-placeholder svg {
-            width: 48px;
-            height: 48px;
+        .scan-reticle {
+            width: 80vw;
+            max-width: 320px;
+            aspect-ratio: 210/297;
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            position: relative;
         }
 
-        .result-flash {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: var(--space-5);
-            margin-bottom: var(--space-3);
-            animation: bounceIn 0.5s ease-out;
+        .scan-reticle .corner {
+            position: absolute;
+            width: 28px;
+            height: 28px;
         }
 
-        .result-flash-header {
+        .scan-reticle .corner::before,
+        .scan-reticle .corner::after {
+            content: '';
+            position: absolute;
+            background: var(--primary);
+        }
+
+        .scan-reticle .tl {
+            top: -2px;
+            left: -2px;
+        }
+
+        .scan-reticle .tl::before {
+            top: 0;
+            left: 0;
+            width: 28px;
+            height: 3px;
+        }
+
+        .scan-reticle .tl::after {
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 28px;
+        }
+
+        .scan-reticle .tr {
+            top: -2px;
+            right: -2px;
+        }
+
+        .scan-reticle .tr::before {
+            top: 0;
+            right: 0;
+            width: 28px;
+            height: 3px;
+        }
+
+        .scan-reticle .tr::after {
+            top: 0;
+            right: 0;
+            width: 3px;
+            height: 28px;
+        }
+
+        .scan-reticle .bl {
+            bottom: -2px;
+            left: -2px;
+        }
+
+        .scan-reticle .bl::before {
+            bottom: 0;
+            left: 0;
+            width: 28px;
+            height: 3px;
+        }
+
+        .scan-reticle .bl::after {
+            bottom: 0;
+            left: 0;
+            width: 3px;
+            height: 28px;
+        }
+
+        .scan-reticle .br {
+            bottom: -2px;
+            right: -2px;
+        }
+
+        .scan-reticle .br::before {
+            bottom: 0;
+            right: 0;
+            width: 28px;
+            height: 3px;
+        }
+
+        .scan-reticle .br::after {
+            bottom: 0;
+            right: 0;
+            width: 3px;
+            height: 28px;
+        }
+
+        .scan-line {
+            position: absolute;
+            left: 8px;
+            right: 8px;
+            height: 2px;
+            background: var(--primary);
+            opacity: 0.7;
+            box-shadow: 0 0 16px rgba(37, 99, 235, 0.5);
+            animation: scanY 2.5s ease-in-out infinite;
+        }
+
+        @keyframes scanY {
+
+            0%,
+            100% {
+                top: 8px;
+            }
+
+            50% {
+                top: calc(100% - 10px);
+            }
+        }
+
+        .scan-status {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .scan-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 999px;
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .scan-status-pill .dot {
+            width: 8px;
+            height: 8px;
+            background: #10B981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* Top bar */
+        .scan-topbar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
             display: flex;
             align-items: center;
-            gap: var(--space-3);
-            margin-bottom: var(--space-3);
+            justify-content: space-between;
+            z-index: 10;
+            pointer-events: all;
         }
 
-        .result-flash-grade {
-            width: 52px;
-            height: 52px;
+        .scan-topbar-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 999px;
+            color: white;
+            font-size: 0.8125rem;
+            font-weight: 600;
+        }
+
+        /* ── Answer Modal (fullscreen overlay) ── */
+        .answer-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 100;
+            overflow-y: auto;
+            display: none;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .answer-overlay.active {
+            display: block;
+        }
+
+        .answer-overlay-content {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        .answer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .answer-header h2 {
+            font-size: 1.125rem;
+        }
+
+        /* Answer grid compact */
+        .answer-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .answer-row-num {
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
+            background: var(--info-light);
+            color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.125rem;
-            font-weight: 800;
+            font-weight: 700;
+            font-size: 0.8125rem;
+            flex-shrink: 0;
         }
 
-        .result-flash-grade.pass {
+        .answer-row-options {
+            display: flex;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .answer-opt {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .answer-opt.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        }
+
+        .answer-opt.detected {
+            border-color: var(--primary-lighter);
+            background: var(--info-light);
+            color: var(--primary);
+        }
+
+        .answer-opt.correct {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .answer-opt.incorrect {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .submit-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+            z-index: 101;
+        }
+
+        .submit-bar .btn {
+            width: 100%;
+        }
+
+        /* Student select */
+        .student-pick {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+        }
+
+        .student-pick label {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        /* Result banner */
+        .result-banner {
+            padding: 16px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 12px;
+            text-align: center;
+            animation: bounceIn 0.5s ease-out;
+        }
+
+        .result-banner.pass {
             background: var(--success-light);
             color: var(--success-dark);
         }
 
-        .result-flash-grade.fail {
+        .result-banner.fail {
             background: var(--danger-light);
             color: var(--danger-dark);
         }
 
-        .result-flash-info h4 {
-            font-size: 0.9375rem;
-            margin-bottom: 2px;
+        .result-banner .grade {
+            font-size: 2rem;
+            font-weight: 900;
         }
 
-        .result-flash-info p {
-            font-size: 0.8125rem;
-            color: var(--text-secondary);
+        .result-banner .detail {
+            font-size: 0.875rem;
+            margin-top: 4px;
         }
 
-        .result-flash-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: var(--space-2);
-            text-align: center;
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .result-flash-stat {
-            padding: var(--space-2);
-            background: var(--surface);
-            border-radius: var(--radius-md);
-        }
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
 
-        .result-flash-stat .val {
-            font-size: 1.125rem;
-            font-weight: 700;
-        }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
 
-        .result-flash-stat .lbl {
-            font-size: 0.6875rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-        }
+            70% {
+                transform: scale(0.95);
+            }
 
-        .result-flash-stat.good .val {
-            color: var(--success);
-        }
-
-        .result-flash-stat.bad .val {
-            color: var(--danger);
-        }
-
-        .results-list {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-3);
-            overflow-y: auto;
-        }
-
-        .error-state {
-            text-align: center;
-            padding: var(--space-12);
-            color: var(--danger);
-            font-weight: 600;
-        }
-
-        .scan-btn-container {
-            position: sticky;
-            bottom: var(--space-4);
-            padding-top: var(--space-3);
+            100% {
+                transform: scale(1);
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="mobile-container">
-        <div class="mobile-header">
-            <div class="mobile-logo">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                </svg>
-            </div>
-            <h1>Hands<span style="color:var(--primary)">Up</span> Scanner</h1>
-        </div>
-
-        <div class="session-badge" id="session-status">
-            <span class="dot"></span>
-            <span id="session-text">Conectando sesión...</span>
-        </div>
-
-        <!-- Camera -->
-        <div class="mobile-camera" id="camera-area">
-            <video id="mobile-video" playsinline autoplay muted></video>
-            <canvas id="mobile-canvas"></canvas>
-            <div class="mobile-scan-overlay hidden" id="scan-overlay-el">
-                <div class="mobile-scan-frame">
-                    <div class="msf-bottom"></div>
-                    <div class="mobile-scan-line"></div>
+    <!-- Fullscreen Scanner -->
+    <div class="scanner-fullscreen" id="scanner">
+        <video id="cam" playsinline autoplay muted></video>
+        <canvas id="cv"></canvas>
+        <div class="scan-hud" id="hud">
+            <div class="scan-topbar">
+                <div class="scan-topbar-pill">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    HandsUp
+                </div>
+                <div class="scan-topbar-pill" id="session-pill">
+                    <span class="dot"></span>
+                    <span id="session-label">Conectando...</span>
                 </div>
             </div>
-            <div class="mobile-placeholder" id="mobile-placeholder">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                    <circle cx="12" cy="13" r="4" />
-                </svg>
-                <p>Toca el botón para escanear</p>
+            <div class="scan-reticle">
+                <div class="corner tl"></div>
+                <div class="corner tr"></div>
+                <div class="corner bl"></div>
+                <div class="corner br"></div>
+                <div class="scan-line"></div>
+            </div>
+            <div class="scan-status">
+                <div class="scan-status-pill" id="status-text">
+                    <span class="dot"></span> Apunta al examen
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- Scan button -->
-        <div class="scan-btn-container">
-            <button class="btn btn-primary btn-lg w-full" id="btn-mobile-scan" onclick="MobileScanner.toggleScan()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                    <circle cx="12" cy="13" r="4" />
-                </svg>
-                <span id="scan-btn-text">Escanear examen</span>
-            </button>
+    <!-- Answer Overlay -->
+    <div class="answer-overlay" id="answer-overlay">
+        <div class="answer-overlay-content">
+            <div class="answer-header">
+                <h2 id="exam-title-display">Examen</h2>
+                <button onclick="App.closeAnswers()" style="background:none;border:none;cursor:pointer;padding:8px;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)"
+                        stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div id="result-banner-slot"></div>
+            <div class="student-pick">
+                <label>Alumno</label>
+                <select class="input" id="student-sel">
+                    <option value="">Selecciona alumno</option>
+                </select>
+            </div>
+            <div id="answer-rows"></div>
         </div>
-
-        <!-- Results List (appear instantly) -->
-        <div class="results-list" id="results-list"></div>
-
-        <!-- Error State -->
-        <div class="error-state hidden" id="error-state">
-            <p>Sesión no válida o expirada</p>
+        <div class="submit-bar" id="submit-bar">
+            <button class="btn btn-primary btn-lg" onclick="App.submitAnswers()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Corregir y guardar
+            </button>
         </div>
     </div>
 
@@ -353,280 +518,322 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/utils.js"></script>
     <script>
-        const MobileScanner = {
+        const App = {
             token: null,
             session: null,
             stream: null,
             scanning: false,
-            scannedResults: [],
+            exam: null,
+            answers: {},
+            lastScanId: null,
+            lastScanTime: 0,
 
             async init() {
-                const params = new URLSearchParams(window.location.search);
-                this.token = params.get('token');
-                if (!this.token) {
-                    this.showError('No se proporcionó token de sesión');
-                    return;
-                }
-                // Validate session token
+                const p = new URLSearchParams(location.search);
+                this.token = p.get('token');
+                if (!this.token) { this.setStatus('No token', true); return; }
                 try {
-                    const snap = await db.collection('handsup_scan_sessions').where('token', '==', this.token).where('active', '==', true).limit(1).get();
-                    if (snap.empty) {
-                        this.showError('Sesión expirada o no válida');
-                        return;
-                    }
+                    const snap = await db.collection('handsup_scan_sessions')
+                        .where('token', '==', this.token).where('active', '==', true).limit(1).get();
+                    if (snap.empty) { this.setStatus('Sesión expirada', true); return; }
                     const doc = snap.docs[0];
                     this.session = { id: doc.id, ...doc.data() };
-                    document.getElementById('session-text').textContent = 'Sesión activa — ' + (this.session.userName || 'Profesor');
-                    // Listen for session changes (deactivation)
-                    db.collection('handsup_scan_sessions').doc(doc.id).onSnapshot(snap => {
-                        if (!snap.exists || !snap.data().active) {
-                            this.showError('Sesión cerrada por el profesor');
-                        }
+                    document.getElementById('session-label').textContent = this.session.userName || 'Profesor';
+                    db.collection('handsup_scan_sessions').doc(doc.id).onSnapshot(s => {
+                        if (!s.exists || !s.data().active) this.setStatus('Sesión cerrada', true);
                     });
-                } catch (err) {
-                    console.error(err);
-                    this.showError('Error al validar sesión');
-                }
+                    this.startCamera();
+                } catch (e) { this.setStatus('Error: ' + e.message, true); }
             },
 
-            showError(msg) {
-                document.getElementById('session-status').innerHTML = `<span style="color:var(--danger)">✕</span><span>${msg}</span>`;
-                document.getElementById('session-status').style.background = 'var(--danger-light)';
-                document.getElementById('session-status').style.color = 'var(--danger-dark)';
-                document.getElementById('error-state').classList.remove('hidden');
-                document.getElementById('btn-mobile-scan').disabled = true;
-                document.getElementById('btn-mobile-scan').style.opacity = '0.5';
+            setStatus(text, isError) {
+                const el = document.getElementById('status-text');
+                el.innerHTML = isError
+                    ? `<span style="color:#EF4444">✕</span> ${text}`
+                    : `<span class="dot"></span> ${text}`;
             },
 
-            async toggleScan() {
-                if (this.scanning) {
-                    this.stopScan();
-                } else {
-                    await this.startScan();
-                }
-            },
-
-            async startScan() {
+            async startCamera() {
                 try {
                     this.stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 960 } }
+                        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
                     });
-                    const video = document.getElementById('mobile-video');
-                    video.srcObject = this.stream;
-                    video.play();
-                    document.getElementById('mobile-placeholder').classList.add('hidden');
-                    document.getElementById('scan-overlay-el').classList.remove('hidden');
-                    document.getElementById('scan-btn-text').textContent = 'Detener';
+                    document.getElementById('cam').srcObject = this.stream;
                     this.scanning = true;
                     this.scanLoop();
-                } catch (err) {
-                    Utils.showToast('No se pudo abrir la cámara', 'error');
+                } catch (e) {
+                    this.setStatus('Cámara no disponible', true);
                 }
-            },
-
-            stopScan() {
-                this.scanning = false;
-                if (this.stream) {
-                    this.stream.getTracks().forEach(t => t.stop());
-                    this.stream = null;
-                }
-                document.getElementById('mobile-video').srcObject = null;
-                document.getElementById('mobile-placeholder').classList.remove('hidden');
-                document.getElementById('scan-overlay-el').classList.add('hidden');
-                document.getElementById('scan-btn-text').textContent = 'Escanear examen';
             },
 
             scanLoop() {
                 if (!this.scanning) return;
-                const video = document.getElementById('mobile-video');
-                const canvas = document.getElementById('mobile-canvas');
-                if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+                const video = document.getElementById('cam');
+                const canvas = document.getElementById('cv');
+                if (video.readyState !== video.HAVE_ENOUGH_DATA) {
                     requestAnimationFrame(() => this.scanLoop());
                     return;
                 }
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
-                const ctx = canvas.getContext('2d');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
                 ctx.drawImage(video, 0, 0);
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
                 if (typeof jsQR !== 'undefined') {
-                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    const code = jsQR(imgData.data, imgData.width, imgData.height);
                     if (code) {
                         try {
                             const data = JSON.parse(code.data);
                             if (data.app === 'handsup' && data.examId) {
-                                // Avoid re-scanning same exam
-                                if (this.lastScannedId === data.examId && Date.now() - this.lastScannedTime < 5000) {
+                                if (this.lastScanId === data.examId && Date.now() - this.lastScanTime < 8000) {
                                     requestAnimationFrame(() => this.scanLoop());
                                     return;
                                 }
-                                this.lastScannedId = data.examId;
-                                this.lastScannedTime = Date.now();
-                                navigator.vibrate?.(200);
-                                this.processExam(data.examId);
+                                this.lastScanId = data.examId;
+                                this.lastScanTime = Date.now();
+                                navigator.vibrate?.([100, 50, 100]);
+                                this.setStatus('¡Detectado! Procesando...');
+
+                                // Try to detect answers from the image
+                                const detectedAnswers = this.detectBubbles(imgData, code.location, data);
+                                this.loadExam(data.examId, detectedAnswers);
+                                return;
                             }
-                        } catch (e) { /* not our QR */ }
+                        } catch (e) { }
                     }
                 }
                 requestAnimationFrame(() => this.scanLoop());
             },
 
-            async processExam(examId) {
+            // ── Bubble Detection (OMR) ──────────────────
+            detectBubbles(imgData, qrLocation, examData) {
+                const w = imgData.width, h = imgData.height;
+                const pixels = imgData.data;
+                const detected = {};
+
+                try {
+                    // Get QR center and size to estimate page bounds
+                    const qrCorners = [qrLocation.topLeftCorner, qrLocation.topRightCorner,
+                    qrLocation.bottomRightCorner, qrLocation.bottomLeftCorner];
+                    const qrCX = qrCorners.reduce((s, c) => s + c.x, 0) / 4;
+                    const qrCY = qrCorners.reduce((s, c) => s + c.y, 0) / 4;
+                    const qrSize = Math.sqrt(
+                        Math.pow(qrCorners[1].x - qrCorners[0].x, 2) +
+                        Math.pow(qrCorners[1].y - qrCorners[0].y, 2)
+                    );
+
+                    // On the printed A4: QR is 70px wide on a 210mm page
+                    // QR is at top-right: ~10mm from right edge, ~10mm from top
+                    // Page width ≈ qrSize * (210/18.5) — 18.5mm ≈ 70px at print scale
+                    const pageWidthEst = qrSize * (210 / 18.5);
+                    const pageHeightEst = pageWidthEst * (297 / 210);
+
+                    // Estimate page top-left corner
+                    // QR center is at approximately (pageWidth - 13mm, 13mm) from top-left
+                    const pageTLX = qrCX - (pageWidthEst * (210 - 13) / 210);
+                    const pageTLY = qrCY - (pageWidthEst * 13 / 210);
+
+                    // Answer grid starts at approximately:
+                    // X: 14mm from left, Y: 75mm from top (after header+student+instructions)
+                    // Grid: 5 columns, each ~36mm wide
+                    // Each row: ~6mm tall
+                    // Bubble spacing: ~5mm between bubbles, number takes ~6mm
+                    const gridStartX = pageTLX + (pageWidthEst * 16 / 210);
+                    const gridStartY = pageTLY + (pageWidthEst * 80 / 210);
+                    const colWidth = pageWidthEst * 35 / 210;
+                    const rowHeight = pageWidthEst * 5.5 / 210;
+                    const numStartOffset = pageWidthEst * 7 / 210;
+                    const bubbleSpacing = pageWidthEst * 4.5 / 210;
+                    const bubbleRadius = pageWidthEst * 2 / 210;
+
+                    // Helper: get average darkness at a point
+                    const getDarkness = (cx, cy) => {
+                        const r = Math.max(2, Math.round(bubbleRadius * 0.6));
+                        let total = 0, count = 0;
+                        for (let dy = -r; dy <= r; dy++) {
+                            for (let dx = -r; dx <= r; dx++) {
+                                const px = Math.round(cx + dx), py = Math.round(cy + dy);
+                                if (px >= 0 && px < w && py >= 0 && py < h) {
+                                    const idx = (py * w + px) * 4;
+                                    const gray = pixels[idx] * 0.299 + pixels[idx + 1] * 0.587 + pixels[idx + 2] * 0.114;
+                                    total += gray;
+                                    count++;
+                                }
+                            }
+                        }
+                        return count > 0 ? total / count : 255;
+                    };
+
+                    // For each question, check 4 bubbles, pick darkest if below threshold
+                    // We don't know total questions yet, try up to 50
+                    for (let q = 0; q < 50; q++) {
+                        const col = q % 5;
+                        const row = Math.floor(q / 5);
+                        const baseX = gridStartX + col * colWidth + numStartOffset;
+                        const baseY = gridStartY + row * rowHeight;
+
+                        const darknesses = [];
+                        for (let b = 0; b < 4; b++) {
+                            const bx = baseX + b * bubbleSpacing;
+                            const by = baseY;
+                            darknesses.push(getDarkness(bx, by));
+                        }
+
+                        // Find darkest bubble
+                        const minDark = Math.min(...darknesses);
+                        const avgOther = darknesses.reduce((s, v) => s + v, 0) / 4;
+
+                        // If darkest is significantly darker than average (filled bubble)
+                        if (minDark < 140 && (avgOther - minDark) > 30) {
+                            detected[q] = darknesses.indexOf(minDark);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Bubble detection error:', e);
+                }
+
+                return detected;
+            },
+
+            // ── Load Exam & Show Answers ──────────────
+            async loadExam(examId, detectedAnswers) {
                 try {
                     const doc = await db.collection('handsup_exams').doc(examId).get();
-                    if (!doc.exists) {
-                        Utils.showToast('Examen no encontrado', 'error');
-                        return;
-                    }
-                    const examData = { id: examId, ...doc.data() };
+                    if (!doc.exists) { this.setStatus('Examen no encontrado', true); return; }
+                    this.exam = { id: examId, ...doc.data() };
+                    this.answers = {};
 
-                    // Load students for that class
+                    // Pre-fill with detected answers (only valid ones)
+                    const numQ = this.exam.questions.length;
+                    for (let i = 0; i < numQ; i++) {
+                        if (detectedAnswers[i] !== undefined && detectedAnswers[i] >= 0 && detectedAnswers[i] <= 3) {
+                            this.answers[i] = detectedAnswers[i];
+                        }
+                    }
+
+                    // Load students
                     let students = [];
-                    if (examData.classId) {
-                        const classDoc = await db.collection('handsup_classes').doc(examData.classId).get();
-                        if (classDoc.exists) students = classDoc.data().students || [];
+                    if (this.exam.classId) {
+                        const cDoc = await db.collection('handsup_classes').doc(this.exam.classId).get();
+                        if (cDoc.exists) students = cDoc.data().students || [];
                     }
 
-                    // Show quick-answer modal
-                    this.showAnswerModal(examData, students);
-                } catch (err) {
-                    Utils.showToast('Error: ' + err.message, 'error');
+                    this.showAnswerOverlay(students, Object.keys(detectedAnswers).length > 0);
+                } catch (e) {
+                    this.setStatus('Error: ' + e.message, true);
+                    this.scanning = true;
+                    this.scanLoop();
                 }
             },
 
-            showAnswerModal(exam, students) {
+            showAnswerOverlay(students, hasDetected) {
                 const letters = ['A', 'B', 'C', 'D'];
-                const answers = {};
+                document.getElementById('exam-title-display').innerHTML = Utils.renderMarkdown(this.exam.title);
+                document.getElementById('result-banner-slot').innerHTML = hasDetected
+                    ? `<div style="padding:10px 16px;background:var(--info-light);border-radius:var(--radius-md);margin-bottom:12px;font-size:0.8125rem;color:var(--primary);display:flex;align-items:center;gap:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Respuestas detectadas automáticamente. Revisa y corrige si hace falta.
+           </div>`
+                    : '';
 
-                // Create modal
-                let modal = document.getElementById('answer-modal');
-                if (modal) modal.remove();
+                // Student select
+                const sel = document.getElementById('student-sel');
+                sel.innerHTML = '<option value="">Selecciona alumno</option>' +
+                    students.map(s => `<option value="${s.id}" data-name="${Utils.escapeHtml(s.name)}">${Utils.escapeHtml(s.name)}</option>`).join('');
 
-                modal = document.createElement('div');
-                modal.id = 'answer-modal';
-                modal.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:999;overflow-y:auto;padding:var(--space-4);animation:fadeInUp 0.3s ease-out;';
-                modal.innerHTML = `
-          <div style="max-width:500px;margin:0 auto;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4);">
-              <h3 style="font-size:1.125rem;">${Utils.escapeHtml(exam.title)}</h3>
-              <button class="btn btn-ghost btn-icon" onclick="document.getElementById('answer-modal').remove()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
-            <div style="margin-bottom:var(--space-4);">
-              <label style="font-size:0.875rem;font-weight:600;margin-bottom:var(--space-2);display:block;">Alumno:</label>
-              <select class="input" id="modal-student-select">
-                <option value="">Selecciona alumno</option>
-                ${students.map(s => `<option value="${s.id}" data-name="${Utils.escapeHtml(s.name)}">${Utils.escapeHtml(s.name)}</option>`).join('')}
-              </select>
-            </div>
-            <div class="answer-input-grid" id="modal-answer-grid">
-              ${exam.questions.map((q, i) => `
-                <div class="answer-input-item">
-                  <span class="q-label">${i + 1}</span>
-                  <div class="answer-options">
-                    ${letters.map((l, j) => `<button class="answer-option-btn" data-q="${i}" data-o="${j}" onclick="MobileScanner.tmpSelectAnswer(${i},${j},this)">${l}</button>`).join('')}
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-            <button class="btn btn-primary btn-lg w-full mt-6" onclick="MobileScanner.submitMobileAnswers()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-              Corregir y guardar
-            </button>
+                // Answer rows
+                const rows = document.getElementById('answer-rows');
+                rows.innerHTML = this.exam.questions.map((q, i) => `
+        <div class="answer-row">
+          <div class="answer-row-num">${i + 1}</div>
+          <div class="answer-row-options">
+            ${letters.map((l, j) => {
+                    const cls = this.answers[i] === j ? 'selected' + (hasDetected ? ' detected' : '') : '';
+                    return `<div class="answer-opt ${cls}" data-q="${i}" data-o="${j}" onclick="App.pickAnswer(${i},${j},this)">${l}</div>`;
+                }).join('')}
           </div>
-        `;
-                document.body.appendChild(modal);
+        </div>
+      `).join('');
 
-                this.tmpExam = exam;
-                this.tmpAnswers = {};
+                document.getElementById('submit-bar').style.display = 'block';
+                document.getElementById('answer-overlay').classList.add('active');
+                this.scanning = false;
             },
 
-            tmpSelectAnswer(qIndex, oIndex, btn) {
-                const siblings = btn.parentElement.querySelectorAll('.answer-option-btn');
-                siblings.forEach(s => s.classList.remove('selected'));
-                btn.classList.add('selected');
-                this.tmpAnswers[qIndex] = oIndex;
+            pickAnswer(q, o, el) {
+                el.parentElement.querySelectorAll('.answer-opt').forEach(e => {
+                    e.classList.remove('selected', 'detected');
+                });
+                el.classList.add('selected');
+                this.answers[q] = o;
             },
 
-            async submitMobileAnswers() {
-                if (!this.tmpExam || !this.session) return;
-                const select = document.getElementById('modal-student-select');
-                const studentId = select?.value;
-                const studentName = select?.options[select.selectedIndex]?.dataset.name || select?.options[select.selectedIndex]?.text;
+            closeAnswers() {
+                document.getElementById('answer-overlay').classList.remove('active');
+                this.exam = null;
+                this.answers = {};
+                this.scanning = true;
+                this.scanLoop();
+            },
+
+            async submitAnswers() {
+                if (!this.exam || !this.session) return;
+                const sel = document.getElementById('student-sel');
+                const studentId = sel.value;
+                const studentName = sel.options[sel.selectedIndex]?.dataset?.name || sel.options[sel.selectedIndex]?.text;
                 if (!studentId) { Utils.showToast('Selecciona un alumno', 'error'); return; }
 
-                const total = this.tmpExam.questions.length;
+                const total = this.exam.questions.length;
                 const ansArr = [];
                 let correct = 0;
                 for (let i = 0; i < total; i++) {
-                    const a = this.tmpAnswers[i] !== undefined ? this.tmpAnswers[i] : -1;
+                    const a = this.answers[i] !== undefined ? this.answers[i] : -1;
                     ansArr.push(a);
-                    if (a === this.tmpExam.questions[i].correct) correct++;
+                    if (a === this.exam.questions[i].correct) correct++;
                 }
                 const incorrect = total - correct;
                 const grade = Utils.calculateGrade(correct, total);
 
                 // Show correct/incorrect on buttons
-                const btns = document.querySelectorAll('#modal-answer-grid .answer-option-btn');
-                btns.forEach(btn => {
-                    const q = parseInt(btn.dataset.q);
-                    const o = parseInt(btn.dataset.o);
-                    btn.classList.remove('selected');
-                    if (o === this.tmpExam.questions[q].correct) btn.classList.add('correct');
+                document.querySelectorAll('.answer-opt').forEach(btn => {
+                    const q = parseInt(btn.dataset.q), o = parseInt(btn.dataset.o);
+                    btn.classList.remove('selected', 'detected');
+                    if (o === this.exam.questions[q].correct) btn.classList.add('correct');
                     else if (ansArr[q] === o) btn.classList.add('incorrect');
                 });
 
-                // Save result to Firebase
+                // Show result banner
+                const cls = grade >= 5 ? 'pass' : 'fail';
+                document.getElementById('result-banner-slot').innerHTML = `
+        <div class="result-banner ${cls}">
+          <div class="grade">${grade.toFixed(2)}/10</div>
+          <div class="detail">${correct} correctas · ${incorrect} incorrectas</div>
+        </div>
+      `;
+                document.getElementById('submit-bar').style.display = 'none';
+
+                // Save
                 try {
                     await db.collection('handsup_results').add({
-                        examId: this.tmpExam.id,
-                        examTitle: this.tmpExam.title,
-                        classId: this.tmpExam.classId || '',
+                        examId: this.exam.id, examTitle: this.exam.title,
+                        classId: this.exam.classId || '',
                         studentId, studentName,
                         answers: ansArr, correct, incorrect, grade, total,
                         userId: this.session.userId,
                         sessionId: this.session.id,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-
                     Utils.showToast(`${studentName}: ${grade}/10`, 'success');
-
-                    // Add to results list
-                    setTimeout(() => {
-                        document.getElementById('answer-modal')?.remove();
-                        this.addResultCard({ studentName, correct, incorrect, total, grade, examTitle: this.tmpExam.title });
-                    }, 1500);
-                } catch (err) {
-                    Utils.showToast('Error al guardar: ' + err.message, 'error');
+                    // After 2s, close and go back to scanning
+                    setTimeout(() => this.closeAnswers(), 2500);
+                } catch (e) {
+                    Utils.showToast('Error: ' + e.message, 'error');
                 }
-            },
-
-            addResultCard(r) {
-                const list = document.getElementById('results-list');
-                const gradeClass = r.grade >= 5 ? 'pass' : 'fail';
-                const card = document.createElement('div');
-                card.className = 'result-flash';
-                card.innerHTML = `
-          <div class="result-flash-header">
-            <div class="result-flash-grade ${gradeClass}">${r.grade.toFixed(2)}</div>
-            <div class="result-flash-info">
-              <h4>${Utils.escapeHtml(r.studentName)}</h4>
-              <p>${Utils.escapeHtml(r.examTitle)}</p>
-            </div>
-          </div>
-          <div class="result-flash-stats">
-            <div class="result-flash-stat good"><div class="val">${r.correct}</div><div class="lbl">Correctas</div></div>
-            <div class="result-flash-stat bad"><div class="val">${r.incorrect}</div><div class="lbl">Incorrectas</div></div>
-            <div class="result-flash-stat"><div class="val">${r.total}</div><div class="lbl">Total</div></div>
-          </div>
-        `;
-                list.prepend(card);
-                this.scannedResults.push(r);
             }
         };
 
-        MobileScanner.init();
+        App.init();
     </script>
 </body>
 

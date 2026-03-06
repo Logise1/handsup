@@ -110,7 +110,7 @@ const Scanner = {
                 </div>
                 <div style="flex:1">
                     <div style="font-weight:700;font-size:0.9375rem;">${Utils.escapeHtml(r.studentName)}</div>
-                    <div style="font-size:0.8125rem;color:var(--text-secondary)">${Utils.escapeHtml(r.examTitle)} · <span style="color:var(--success)">${r.correct} ✓</span> <span style="color:var(--danger)">${r.incorrect} ✗</span></div>
+                    <div style="font-size:0.8125rem;color:var(--text-secondary)">${Utils.renderMarkdown(r.examTitle)} · <span style="color:var(--success)">${r.correct} ✓</span> <span style="color:var(--danger)">${r.incorrect} ✗</span></div>
                 </div>
             </div>
         `;
@@ -222,7 +222,7 @@ const Scanner = {
             this.renderAnswerInput();
             this.loadStudentsForExam();
             document.getElementById('scan-result-section')?.classList.remove('hidden');
-            document.getElementById('detected-exam-title').textContent = this.detectedExam.title;
+            document.getElementById('detected-exam-title').innerHTML = Utils.renderMarkdown(this.detectedExam.title);
             this.stopCamera();
         } catch (err) {
             Utils.showToast('Error: ' + err.message, 'error');

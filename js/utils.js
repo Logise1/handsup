@@ -175,6 +175,30 @@ const Utils = {
         };
     },
 
+    // Render inline Markdown to HTML (for exam text)
+    // Supports: **bold**, *italic*, `code`, ~~strikethrough~~, ^super^, ~sub~
+    renderMarkdown(text) {
+        if (!text) return '';
+        let html = this.escapeHtml(text);
+        // Code blocks (inline)
+        html = html.replace(/`([^`]+)`/g, '<code style="background:#F1F5F9;padding:1px 4px;border-radius:3px;font-size:0.9em;font-family:monospace;">$1</code>');
+        // Bold
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        // Italic
+        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        // Underline
+        html = html.replace(/__(.+?)__/g, '<u>$1</u>');
+        // Strikethrough
+        html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
+        // Superscript x^2^
+        html = html.replace(/\^(.+?)\^/g, '<sup>$1</sup>');
+        // Subscript H~2~O
+        html = html.replace(/~(.+?)~/g, '<sub>$1</sub>');
+        // Line breaks
+        html = html.replace(/\n/g, '<br>');
+        return html;
+    },
+
     // Escape HTML
     escapeHtml(str) {
         const div = document.createElement('div');

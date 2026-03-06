@@ -83,7 +83,7 @@ const Results = {
             const gradeClass = r.grade >= 5 ? 'pass' : 'fail';
             return `<tr>
         <td><strong>${Utils.escapeHtml(r.studentName || 'Desconocido')}</strong></td>
-        <td>${Utils.escapeHtml(r.examTitle || 'Sin título')}</td>
+        <td>${Utils.renderMarkdown(r.examTitle || 'Sin título')}</td>
         <td class="correct-cell">${r.correct}</td>
         <td class="incorrect-cell">${r.incorrect}</td>
         <td><strong>${r.total || (r.correct + r.incorrect)}</strong></td>

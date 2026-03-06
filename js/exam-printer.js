@@ -50,18 +50,16 @@ const ExamPrinter = {
           <div class="print-question">
             <div class="print-question-text">
               <span class="print-question-num">${i + 1}.</span>
-              <span>${Utils.escapeHtml(q.text)}</span>
+              <span>${Utils.renderMarkdown(q.text)}</span>
             </div>
             <div class="print-options">
               ${q.options.map((opt, j) => `
-                <div class="print-option"><span class="bubble"></span>${letters[j]}) ${Utils.escapeHtml(opt)}</div>
+                <div class="print-option"><span class="bubble"></span>${letters[j]}) ${Utils.renderMarkdown(opt)}</div>
               `).join('')}
             </div>
           </div>
         `).join('');
 
-    // PAGE 1: Header + Instructions + Answer Grid + QR + Markers
-    // PAGE 2+: Questions
     sheet.innerHTML = `
           <!-- ═══════ PAGE 1: ANSWER SHEET ═══════ -->
           <div class="exam-page exam-page-answer">
@@ -70,18 +68,23 @@ const ExamPrinter = {
             <div class="corner-marker bottom-left"></div>
             <div class="corner-marker bottom-right"></div>
 
+            <!-- QR top-right -->
+            <div class="exam-qr-corner exam-qr-top-right">
+              <div id="qr-code-tr"></div>
+            </div>
+            <!-- QR bottom-left -->
+            <div class="exam-qr-corner exam-qr-bottom-left">
+              <div id="qr-code-bl"></div>
+            </div>
+
             <div class="exam-sheet-header">
               <div class="exam-sheet-info">
-                <h2>${Utils.escapeHtml(d.title)}</h2>
+                <h2>${Utils.renderMarkdown(d.title)}</h2>
                 <div class="exam-meta">
-                  <div class="exam-meta-item"><strong>Asignatura:</strong> ${Utils.escapeHtml(d.subject || 'General')}</div>
+                  <div class="exam-meta-item"><strong>Asignatura:</strong> ${Utils.renderMarkdown(d.subject || 'General')}</div>
                   <div class="exam-meta-item"><strong>Fecha:</strong> ${today}</div>
                   <div class="exam-meta-item"><strong>Preguntas:</strong> ${numQ}</div>
                 </div>
-              </div>
-              <div class="exam-qr-container">
-                <div id="qr-code"></div>
-                <div class="exam-qr-label">ID: ${this.examId.substring(0, 8)}</div>
               </div>
             </div>
 
@@ -102,9 +105,8 @@ const ExamPrinter = {
               </div>
               <ul class="instructions-list">
                 <li>Rellena completamente el círculo de la respuesta correcta con bolígrafo negro o azul.</li>
-                <li>Marca <strong>una sola respuesta</strong> por pregunta. Si marcas más de una, la pregunta se considerará incorrecta.</li>
-                <li>No dobles ni arrugues esta hoja. No escribas fuera de los espacios indicados.</li>
-                <li>No borres: si te equivocas, tacha y marca claramente la respuesta correcta.</li>
+                <li>Marca <strong>una sola respuesta</strong> por pregunta.</li>
+                <li>No dobles ni arrugues esta hoja.</li>
               </ul>
             </div>
 
@@ -117,28 +119,38 @@ const ExamPrinter = {
           <!-- ═══════ PAGE 2+: QUESTIONS ═══════ -->
           <div class="exam-page exam-page-questions">
             <div class="questions-page-header">
-              <h3>${Utils.escapeHtml(d.title)} — Preguntas</h3>
-              <p>${Utils.escapeHtml(d.subject || 'General')} · ${numQ} preguntas</p>
+              <h3>${Utils.renderMarkdown(d.title)} — Preguntas</h3>
+              <p>${Utils.renderMarkdown(d.subject || 'General')} · ${numQ} preguntas</p>
             </div>
             ${questionsHtml}
           </div>
         `;
 
-    this.generateQR();
+    this.generateQRCodes();
   },
 
-  generateQR() {
-    const container = document.getElementById('qr-code');
-    if (!container || !this.examId) return;
+  generateQRCodes() {
     const qrData = JSON.stringify({ app: 'handsup', examId: this.examId, v: 1 });
-    if (typeof QRCode !== 'undefined') {
-      new QRCode(container, {
-        text: qrData, width: 80, height: 80,
-        colorDark: '#1E293B', colorLight: '#ffffff',
+    if (typeof QRCode === 'undefined') return;
+
+    // Top-right QR
+    const trEl = document.getElementById('qr-code-tr');
+    if (trEl) {
+      new QRCode(trEl, {
+        text: qrData, width: 70, height: 70,
+        colorDark: '#000000', colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.M
       });
-    } else {
-      container.innerHTML = `<div style="width:80px;height:80px;border:2px solid #1E293B;display:flex;align-items:center;justify-content:center;font-size:10px;color:#64748B;">QR</div>`;
+    }
+
+    // Bottom-left QR
+    const blEl = document.getElementById('qr-code-bl');
+    if (blEl) {
+      new QRCode(blEl, {
+        text: qrData, width: 70, height: 70,
+        colorDark: '#000000', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
     }
   },
 

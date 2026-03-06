@@ -417,6 +417,27 @@
     height: 20px;
 }
 
+/* ── QR Code Corners ── */
+.exam-qr-corner {
+    position: absolute;
+    z-index: 2;
+}
+
+.exam-qr-top-right {
+    top: 10mm;
+    right: 10mm;
+}
+
+.exam-qr-bottom-left {
+    bottom: 10mm;
+    left: 10mm;
+}
+
+.exam-qr-corner canvas,
+.exam-qr-corner img {
+    display: block !important;
+}
+
 /* ── Header ── */
 .exam-sheet-header {
     display: flex;
