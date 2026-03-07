@@ -248,11 +248,11 @@ vantar
                     const center = canvasSize / 2;
 
                     // A (Top) - Triangle
-                    ctx.fillStyle = 'var(--answer-a, #E74C3C)';
+                    ctx.fillStyle = '#E74C3C';
                     ctx.fillText('A ▲', center, labelOffset);
 
                     // B (Right) - Square
-                    ctx.fillStyle = 'var(--answer-b, #3498DB)';
+                    ctx.fillStyle = '#3498DB';
                     ctx.save();
                     ctx.translate(canvasSize - labelOffset, center);
                     ctx.rotate(Math.PI / 2);
@@ -260,7 +260,7 @@ vantar
                     ctx.restore();
 
                     // C (Bottom) - Circle
-                    ctx.fillStyle = 'var(--answer-c, #F1C40F)';
+                    ctx.fillStyle = '#F1C40F';
                     ctx.save();
                     ctx.translate(center, canvasSize - labelOffset);
                     ctx.rotate(Math.PI);
@@ -268,7 +268,7 @@ vantar
                     ctx.restore();
 
                     // D (Left) - Diamond
-                    ctx.fillStyle = 'var(--answer-d, #2ECC71)';
+                    ctx.fillStyle = '#2ECC71';
                     ctx.save();
                     ctx.translate(labelOffset, center);
                     ctx.rotate(-Math.PI / 2);
