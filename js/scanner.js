@@ -358,8 +358,9 @@ const Scanner = {
             const homography = Utils.math.getHomography(srcCorners, dstCorners);
             if (!homography) return {};
 
-            const pxPerMM = (Math.abs(dstCorners[1].x - dstCorners[0].x) + Math.abs(dstCorners[3].y - dstCorners[0].y)) / 2 / qrSizeMM;
-            const bubbleRadiusPx = Math.max(2, Math.round(pxPerMM * 1.5));
+            const dist = (p1, p2) => Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+            const pxPerMM = (dist(dstCorners[0], dstCorners[1]) + dist(dstCorners[0], dstCorners[3])) / 2 / qrSizeMM;
+            const bubbleRadiusPx = Math.max(3, Math.round(pxPerMM * 1.5));
 
             const getDarkness = (px, py) => {
                 const cx = Math.round(px), cy = Math.round(py);
@@ -392,9 +393,9 @@ const Scanner = {
                 let absoluteDarkest = 255;
                 let highestLocalScore = -1;
 
-                // Micro-sweep (+/- 1.5mm) to compensate for lens distortion or folded paper
-                for (let dy = -1.5; dy <= 1.5; dy += 0.5) {
-                    for (let dx = -1.5; dx <= 1.5; dx += 0.5) {
+                // Micro-sweep (+/- 2.0mm) to compensate for lens distortion or folded paper
+                for (let dy = -2.0; dy <= 2.0; dy += 0.5) {
+                    for (let dx = -2.0; dx <= 2.0; dx += 0.5) {
                         let darknesses = [];
                         for (let opt = 0; opt < 4; opt++) {
                             const mmP = { x: nominalCx + opt * 5.2 + dx, y: nominalCy + dy };
