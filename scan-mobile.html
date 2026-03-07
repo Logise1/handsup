@@ -656,36 +656,60 @@
                         return count > 0 ? total / count : 255;
                     };
 
-                    for (let q = 0; q < 50; q++) {
-                        const col = q % 5;
-                        const row = Math.floor(q / 5);
+                    const getOptX = (col, opt) => 14 + col * 36.824 + 7.276 + opt * 4.762;
+                    const getOptY = (baseY, row) => baseY + row * 5.291;
 
-                        const nominalCx = 14 + col * 36.4 + 7.2;
-                        const nominalCy = 96.6 + row * 5.82 + 2.25;
+                    // 1. Auto-align Base Y to handle dynamic title lengths
+                    let bestBaseY = 96.6;
+                    let bestScore = -1;
 
-                        let maxContrast = -1;
-                        let bestOpt = -1;
-                        let absoluteDarkest = 255;
-
-                        for (let yShift of [0, 2, -2, 4, -4, 6, -6, 8, -8]) {
+                    for (let y = 80; y <= 160; y += 0.5) {
+                        let score = 0;
+                        for (let q = 0; q < 15; q++) {
+                            const col = q % 5;
+                            const row = Math.floor(q / 5);
                             let darknesses = [];
                             for (let opt = 0; opt < 4; opt++) {
-                                const mmP = { x: nominalCx + opt * 4.8, y: nominalCy + yShift };
+                                const mmP = { x: getOptX(col, opt), y: getOptY(y, row) };
                                 const camP = Utils.math.applyHomography(mmP, homography);
                                 darknesses.push(getDarkness(camP.x, camP.y));
                             }
                             let minD = Math.min(...darknesses);
-                            let avgOthers = (darknesses.reduce((a, b) => a + b, 0) - minD) / 3;
-                            let contrast = avgOthers - minD;
+                            let avgOther = (darknesses.reduce((a, b) => a + b, 0) - minD) / 3;
+                            let contrast = avgOther - minD;
+                            if (minD < 140 && contrast > 30) {
+                                score += contrast;
+                            }
+                        }
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestBaseY = y;
+                        }
+                    }
 
-                            if (contrast > maxContrast && minD < 140) {
-                                maxContrast = contrast;
-                                bestOpt = darknesses.indexOf(minD);
-                                absoluteDarkest = minD;
+                    // 2. Read answers using the anchored bestBaseY
+                    for (let q = 0; q < 50; q++) {
+                        const col = q % 5;
+                        const row = Math.floor(q / 5);
+                        let darknesses = [];
+                        let darkestVal = 255;
+                        let bestOpt = -1;
+
+                        for (let opt = 0; opt < 4; opt++) {
+                            const mmP = { x: getOptX(col, opt), y: getOptY(bestBaseY, row) };
+                            const camP = Utils.math.applyHomography(mmP, homography);
+                            const dark = getDarkness(camP.x, camP.y);
+                            darknesses.push(dark);
+                            if (dark < darkestVal) {
+                                darkestVal = dark;
+                                bestOpt = opt;
                             }
                         }
 
-                        if (maxContrast > 25 && absoluteDarkest < 140) {
+                        let avgOthers = (darknesses.reduce((a, b) => a + b, 0) - darkestVal) / 3;
+                        let contrast = avgOthers - darkestVal;
+
+                        if (contrast > 20 && darkestVal < 150) {
                             detected[q] = bestOpt;
                         }
                     }
