@@ -167,7 +167,9 @@
 
     <!-- Panel top right for student status -->
     <div id="studentStatusPanel" class="student-status-panel" style="display:none">
-        <div class="panel-header">Alumnos <span id="panelRespCount">0</span>/<span id="panelTotalCount">0</span></div>
+        <div class="panel-header">Respuestas recibidas: <span id="panelRespCount"
+                style="color:var(--success)">0</span>/<span id="panelTotalCount">0</span></div>
+        <div style="font-size:0.75rem; color:var(--gray-400); margin-bottom: 8px;">Faltan por responder:</div>
         <div class="student-status-grid" id="studentStatusGrid"></div>
     </div>
 
@@ -438,10 +440,18 @@
             document.getElementById('responseCount').textContent = respCount;
             document.getElementById('panelRespCount').textContent = respCount;
 
-            // Update pill
+            // Update pill: turn green, then remove after 1s
             const pill = document.getElementById(`pill-${studentId}`);
-            if (pill) {
+            if (pill && !pill.classList.contains('answered')) {
                 pill.classList.add('answered');
+                setTimeout(() => {
+                    pill.style.opacity = '0';
+                    pill.style.height = '0px';
+                    pill.style.padding = '0px';
+                    pill.style.marginBottom = '0px';
+                    pill.style.overflow = 'hidden';
+                    setTimeout(() => pill.style.display = 'none', 300);
+                }, 1000);
             }
 
             // Check if all responded

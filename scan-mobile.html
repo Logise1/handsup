@@ -281,6 +281,11 @@
         let gameData = null;
         let localResponses = {};
         let isQuestionActive = false;
+        let currentQuestionIndex = -1;
+
+        // Batching network requests for speed
+        let pendingUpdates = {};
+        let updateTimeout = null;
 
         // Camera vars
         const video = document.getElementById("video");
@@ -328,8 +333,16 @@
                         }
                     }
 
-                    // Question info
+                    // Question info & State clear check
                     if (data.quizId && data.currentQuestion >= 0) {
+                        if (currentQuestionIndex !== data.currentQuestion) {
+                            // New question! Wipe UI cleanly
+                            currentQuestionIndex = data.currentQuestion;
+                            localResponses = {};
+                            recentScans.clear();
+                            document.getElementById('scannedList').innerHTML = '';
+                        }
+
                         const quizDoc = await getDoc(doc(db, 'quizzes', data.quizId));
                         if (quizDoc.exists()) {
                             const q = quizDoc.data().questions[data.currentQuestion];
@@ -348,10 +361,7 @@
                             updated = true;
                         }
                     }
-                    if (updated || Object.keys(localResponses).length === 0) {
-                        if (Object.keys(localResponses).length === 0) {
-                            localResponses = {}; // explicit reset
-                        }
+                    if (updated) {
                         renderList();
                     }
 
@@ -457,6 +467,21 @@
             requestAnimationFrame(tick);
         }
 
+        function queueNetworkUpdate(studentId, answer, now) {
+            // Add to batch queue
+            pendingUpdates[`responses.${studentId}`] = { answer, timestamp: now };
+
+            // Debounce the network request
+            if (updateTimeout) clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(() => {
+                const batch = { ...pendingUpdates };
+                pendingUpdates = {};
+                if (Object.keys(batch).length > 0) {
+                    updateDoc(doc(db, 'games', gameId), batch).catch(console.error);
+                }
+            }, 200); // Wait 200ms to accumulate more scans
+        }
+
         function processDetectedCode(code) {
             try {
                 // Parse student data from QR
@@ -501,10 +526,8 @@
                     flashScreen();
                     renderList();
 
-                    // Sync to Firebase
-                    updateDoc(doc(db, 'games', gameId), {
-                        [`responses.${studentId}`]: { answer, timestamp: now }
-                    }).catch(console.error);
+                    // Sync to Firebase cleanly (Batched)
+                    queueNetworkUpdate(studentId, answer, now);
                 }
 
             } catch (e) {
@@ -540,9 +563,8 @@
                         recentScans.set(studentId, { time: now, ans: answer });
                         flashScreen();
                         renderList();
-                        updateDoc(doc(db, 'games', gameId), {
-                            [`responses.${studentId}`]: { answer, timestamp: now }
-                        }).catch(console.error);
+
+                        queueNetworkUpdate(studentId, answer, now);
                     }
                 }
             }
