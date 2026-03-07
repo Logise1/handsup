@@ -134,7 +134,7 @@ const ExamPrinter = {
     if (trEl) {
       trEl.innerHTML = '';
       new QRCode(trEl, {
-        text: qrData, width: 100, height: 100,
+        text: qrData, width: 200, height: 200,
         colorDark: '#000000', colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.M
       });

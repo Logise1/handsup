@@ -433,9 +433,14 @@
     left: 10mm;
 }
 
-.exam-qr-corner canvas,
+.exam-qr-corner canvas {
+    display: none !important;
+}
+
 .exam-qr-corner img {
     display: block !important;
+    width: 100px;
+    height: 100px;
 }
 
 /* ── Header ── */
