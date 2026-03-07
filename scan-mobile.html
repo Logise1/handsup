@@ -394,13 +394,49 @@
 
                 if (isQuestionActive) {
                     const imageData = ctx.getImageData(0, 0, hiddenCanvas.width, hiddenCanvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: "dontInvert",
-                    });
 
-                    if (code) {
+                    // Clear previous overlays
+                    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+                    let codeFoundCurrentFrame = false;
+
+                    // Loop to find MULTIPLE QR codes in the same frame
+                    while (true) {
+                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                            inversionAttempts: "dontInvert"
+                        });
+
+                        if (!code) break; // No more QR codes found
+
+                        codeFoundCurrentFrame = true;
                         processDetectedCode(code);
+
+                        // Erase the detected QR code from the imageData by painting a white box over its bounding rectangle
+                        // so the jsQR algorithm can find the NEXT one in the same frame!
+                        const minX = Math.min(code.location.topLeftCorner.x, code.location.bottomLeftCorner.x);
+                        const maxX = Math.max(code.location.topRightCorner.x, code.location.bottomRightCorner.x);
+                        const minY = Math.min(code.location.topLeftCorner.y, code.location.topRightCorner.y);
+                        const maxY = Math.max(code.location.bottomLeftCorner.y, code.location.bottomRightCorner.y);
+
+                        // Apply padding to erase area safely
+                        const pad = 10;
+                        const startY = Math.max(0, Math.floor(minY) - pad);
+                        const endY = Math.min(imageData.height, Math.ceil(maxY) + pad);
+                        const startX = Math.max(0, Math.floor(minX) - pad);
+                        const endX = Math.min(imageData.width, Math.ceil(maxX) + pad);
+
+                        for (let y = startY; y < endY; y++) {
+                            for (let x = startX; x < endX; x++) {
+                                const i = (y * imageData.width + x) * 4;
+                                imageData.data[i] = 255;     // R
+                                imageData.data[i + 1] = 255; // G
+                                imageData.data[i + 2] = 255; // B
+                                // Alpha is already 255
+                            }
+                        }
                     }
+
+                    // Optional: remove flash if needed (handled inside processDetectedCode typically)
                 }
             }
             requestAnimationFrame(tick);
@@ -410,7 +446,7 @@
             try {
                 // Parse student data from QR
                 const data = JSON.parse(code.data);
-                const studentId = data.id;
+                const studentId = data.id || data; // handle object or plain string
 
                 if (!studentId || !studentsMap[studentId]) return;
 
@@ -430,15 +466,15 @@
                 else if (angle >= 135 && angle < 225) answer = 'C'; // Rotated 180
                 else if (angle >= 225 && angle < 315) answer = 'B'; // Rotated 270 CW
 
+                // Always draw detection box temporarily so the teacher knows the camera sees it!
+                drawBox(code.location, answer);
+
                 // Check if we should ignore (throttle to avoid spamming network)
                 const now = Date.now();
                 const lastScan = recentScans.get(studentId);
                 if (lastScan && now - lastScan.time < 2000 && lastScan.ans === answer) {
-                    return; // Same answer recently scanned, ignore
+                    return; // Same answer recently scanned, ignore network push
                 }
-
-                // Draw detection box temporarily
-                drawBox(code.location, answer);
 
                 // Check if different from current local state
                 if (!localResponses[studentId] || localResponses[studentId].answer !== answer) {
@@ -457,7 +493,43 @@
                 }
 
             } catch (e) {
-                // Not our JSON format or some other error, ignore
+                // Not a valid JSON payload or something failed.
+                // However, wait! Our new print code generates pure strings:
+                // value: student.id
+                // So let's fall back to assume the pure string IS the ID!
+                const studentId = code.data;
+                if (studentId && studentsMap[studentId]) {
+                    // Re-parse it using the same logic if it's just the exact string ID
+                    const tl = code.location.topLeftCorner;
+                    const tr = code.location.topRightCorner;
+                    const dx = tr.x - tl.x;
+                    const dy = tr.y - tl.y;
+                    let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    if (angle < 0) angle += 360;
+
+                    let answer = '';
+                    if (angle >= 315 || angle < 45) answer = 'A';       // Upright ~ 0 deg
+                    else if (angle >= 45 && angle < 135) answer = 'D';  // Rotated 90 CW
+                    else if (angle >= 135 && angle < 225) answer = 'C'; // Rotated 180
+                    else if (angle >= 225 && angle < 315) answer = 'B'; // Rotated 270 CW
+
+                    drawBox(code.location, answer);
+
+                    const now = Date.now();
+                    const lastScan = recentScans.get(studentId);
+                    if (lastScan && now - lastScan.time < 2000 && lastScan.ans === answer) {
+                        return;
+                    }
+                    if (!localResponses[studentId] || localResponses[studentId].answer !== answer) {
+                        localResponses[studentId] = { answer, timestamp: now };
+                        recentScans.set(studentId, { time: now, ans: answer });
+                        flashScreen();
+                        renderList();
+                        updateDoc(doc(db, 'games', gameId), {
+                            [`responses.${studentId}`]: { answer, timestamp: now }
+                        }).catch(console.error);
+                    }
+                }
             }
         }
 
@@ -465,8 +537,6 @@
             // Convert video coordinates to CSS coordinates
             const ratioX = overlayCanvas.width / video.videoWidth;
             const ratioY = overlayCanvas.height / video.videoHeight;
-
-            overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
             overlayCtx.beginPath();
             overlayCtx.moveTo(loc.topLeftCorner.x * ratioX, loc.topLeftCorner.y * ratioY);
@@ -484,11 +554,6 @@
             overlayCtx.fillStyle = "#10B981";
             overlayCtx.font = "bold 24px sans-serif";
             overlayCtx.fillText(label, loc.topLeftCorner.x * ratioX, loc.topLeftCorner.y * ratioY - 10);
-
-            // Clear after 300ms
-            setTimeout(() => {
-                overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-            }, 300);
         }
 
         function flashScreen() {

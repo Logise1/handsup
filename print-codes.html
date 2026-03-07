@@ -212,11 +212,11 @@ vantar
             printGrid.innerHTML = '';
 
             students.forEach(student => {
-                // Create QR code
+                // Create QR code using Lowest error correction for sparsest pattern (easiest to scan far away)
                 const qrCanvas = new QRious({
-                    value: JSON.stringify({ id: student.id }),
-                    size: 110,
-                    level: 'H'
+                    value: student.id,
+                    size: 200,
+                    level: 'L'
                 }).canvas;
 
                 // Function to draw card on a canvas
@@ -244,35 +244,35 @@ vantar
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
 
-                    const labelOffset = fontSize;
+                    const labelOffset = fontSize * 0.9;
                     const center = canvasSize / 2;
 
-                    // A (Top)
+                    // A (Top) - Triangle
                     ctx.fillStyle = 'var(--answer-a, #E74C3C)';
-                    ctx.fillText('A', center, labelOffset);
+                    ctx.fillText('A ▲', center, labelOffset);
 
-                    // B (Right)
+                    // B (Right) - Square
                     ctx.fillStyle = 'var(--answer-b, #3498DB)';
                     ctx.save();
                     ctx.translate(canvasSize - labelOffset, center);
                     ctx.rotate(Math.PI / 2);
-                    ctx.fillText('B', 0, 0);
+                    ctx.fillText('B ■', 0, 0);
                     ctx.restore();
 
-                    // C (Bottom)
+                    // C (Bottom) - Circle
                     ctx.fillStyle = 'var(--answer-c, #F1C40F)';
                     ctx.save();
                     ctx.translate(center, canvasSize - labelOffset);
                     ctx.rotate(Math.PI);
-                    ctx.fillText('C', 0, 0);
+                    ctx.fillText('C ●', 0, 0);
                     ctx.restore();
 
-                    // D (Left)
+                    // D (Left) - Diamond
                     ctx.fillStyle = 'var(--answer-d, #2ECC71)';
                     ctx.save();
                     ctx.translate(labelOffset, center);
                     ctx.rotate(-Math.PI / 2);
-                    ctx.fillText('D', 0, 0);
+                    ctx.fillText('D ◆', 0, 0);
                     ctx.restore();
 
                     // Draw student name
@@ -294,10 +294,10 @@ vantar
                 card.appendChild(canvasWrapper);
                 preview.appendChild(card);
 
-                // Print version
+                // Print version (Make it very large, ~2 cards per row on A4)
                 const printItem = document.createElement('div');
                 printItem.className = 'print-code-item';
-                printItem.appendChild(drawCard(220, 140));
+                printItem.appendChild(drawCard(380, 240));
                 printGrid.appendChild(printItem);
             });
         };

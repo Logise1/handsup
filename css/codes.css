@@ -53,20 +53,23 @@
 
     .print-codes-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
+        grid-template-columns: repeat(2, 1fr);
+        /* 2 per row makes them huge! */
+        gap: 30px;
         page-break-inside: auto;
     }
 
     .print-code-item {
         text-align: center;
         page-break-inside: avoid;
-        padding: 8px;
-        border: 1px solid #eee;
+        padding: 20px;
+        border: 2px dashed #ccc;
+        border-radius: 12px;
     }
 
     .print-code-item canvas {
         max-width: 100%;
+        height: auto;
     }
 
     .no-print {
