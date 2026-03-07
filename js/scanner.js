@@ -359,7 +359,7 @@ const Scanner = {
             if (!homography) return {};
 
             const pxPerMM = (Math.abs(dstCorners[1].x - dstCorners[0].x) + Math.abs(dstCorners[3].y - dstCorners[0].y)) / 2 / qrSizeMM;
-            const bubbleRadiusPx = Math.max(3, Math.round(pxPerMM * 2.0));
+            const bubbleRadiusPx = Math.max(2, Math.round(pxPerMM * 1.5));
 
             const getDarkness = (px, py) => {
                 const cx = Math.round(px), cy = Math.round(py);
@@ -380,60 +380,41 @@ const Scanner = {
                 return count > 0 ? total / count : 255;
             };
 
-            const getOptX = (col, opt) => 14 + col * 36.824 + 7.276 + opt * 4.762;
-            const getOptY = (baseY, row) => baseY + row * 5.291;
-
-            // 1. Auto-align Base Y to handle dynamic title lengths
-            let bestBaseY = 96.6;
-            let bestScore = -1;
-
-            for (let y = 80; y <= 160; y += 0.5) {
-                let score = 0;
-                for (let q = 0; q < 15; q++) {
-                    const col = q % 5;
-                    const row = Math.floor(q / 5);
-                    let darknesses = [];
-                    for (let opt = 0; opt < 4; opt++) {
-                        const mmP = { x: getOptX(col, opt), y: getOptY(y, row) };
-                        const camP = Utils.math.applyHomography(mmP, homography);
-                        darknesses.push(getDarkness(camP.x, camP.y));
-                    }
-                    let minD = Math.min(...darknesses);
-                    let avgOther = (darknesses.reduce((a, b) => a + b, 0) - minD) / 3;
-                    let contrast = avgOther - minD;
-                    if (minD < 140 && contrast > 30) {
-                        score += contrast;
-                    }
-                }
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestBaseY = y;
-                }
-            }
-
-            // 2. Read answers using the anchored bestBaseY
             for (let q = 0; q < 50; q++) {
                 const col = q % 5;
                 const row = Math.floor(q / 5);
-                let darknesses = [];
-                let darkestVal = 255;
-                let bestOpt = -1;
 
-                for (let opt = 0; opt < 4; opt++) {
-                    const mmP = { x: getOptX(col, opt), y: getOptY(bestBaseY, row) };
-                    const camP = Utils.math.applyHomography(mmP, homography);
-                    const dark = getDarkness(camP.x, camP.y);
-                    darknesses.push(dark);
-                    if (dark < darkestVal) {
-                        darkestVal = dark;
-                        bestOpt = opt;
+                // Nominal center of bubble A in mm (within the local OMR Block)
+                const nominalCx = 16.6 + col * 27.0;
+                const nominalCy = 26.1 + row * 9.0;
+
+                let bestOpt = -1;
+                let absoluteDarkest = 255;
+                let highestLocalScore = -1;
+
+                // Micro-sweep (+/- 1.5mm) to compensate for lens distortion or folded paper
+                for (let dy = -1.5; dy <= 1.5; dy += 0.5) {
+                    for (let dx = -1.5; dx <= 1.5; dx += 0.5) {
+                        let darknesses = [];
+                        for (let opt = 0; opt < 4; opt++) {
+                            const mmP = { x: nominalCx + opt * 5.2 + dx, y: nominalCy + dy };
+                            const camP = Utils.math.applyHomography(mmP, homography);
+                            darknesses.push(getDarkness(camP.x, camP.y));
+                        }
+
+                        let minD = Math.min(...darknesses);
+                        let avgOther = (darknesses.reduce((a, b) => a + b, 0) - minD) / 3;
+                        let contrast = avgOther - minD;
+
+                        if (contrast > highestLocalScore) {
+                            highestLocalScore = contrast;
+                            bestOpt = darknesses.indexOf(minD);
+                            absoluteDarkest = minD;
+                        }
                     }
                 }
 
-                let avgOthers = (darknesses.reduce((a, b) => a + b, 0) - darkestVal) / 3;
-                let contrast = avgOthers - darkestVal;
-
-                if (contrast > 20 && darkestVal < 150) {
+                if (highestLocalScore > 20 && absoluteDarkest < 150) {
                     detected[q] = bestOpt;
                 }
             }

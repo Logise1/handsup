@@ -35,15 +35,26 @@ const ExamPrinter = {
     const today = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
     const numQ = d.questions.length;
 
-    // Build answer grid
-    let gridHtml = d.questions.map((_, i) => `
-          <div class="answer-grid-item">
-            <span class="ag-num">${i + 1}</span>
-            <div class="ag-bubbles">
-              ${letters.map(l => `<span class="ag-bubble">${l}</span>`).join('')}
-            </div>
+    // Build answer grid with absolute mm positioning
+    let gridHtml = '';
+    for (let i = 0; i < 50; i++) {
+      const col = i % 5;
+      const row = Math.floor(i / 5);
+      const x = 8 + col * 27;
+      const y = 24 + row * 9;
+
+      let bubblesHtml = letters.map((l, j) => {
+        const bx = 6.5 + j * 5.2;
+        return `<span class="ag-bubble" style="position: absolute; left: ${bx}mm; top: 0; width: 4.2mm; height: 4.2mm; border: 0.4mm solid #475569; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 0.5rem; color: #475569; padding: 0;">${l}</span>`;
+      }).join('');
+
+      gridHtml += `
+          <div class="answer-grid-item" style="position: absolute; left: ${x}mm; top: ${y}mm; width: 28mm; height: 4.2mm;">
+            <span class="ag-num" style="position: absolute; left: 0; top: 0; width: 4.5mm; text-align: right; font-weight: bold; font-size: 0.75rem; line-height: 4.2mm; color: #1E293B;">${i + 1}</span>
+            ${bubblesHtml}
           </div>
-        `).join('');
+        `;
+    }
 
     // Build questions for subsequent pages
     let questionsHtml = d.questions.map((q, i) => `
@@ -62,53 +73,58 @@ const ExamPrinter = {
 
     sheet.innerHTML = `
           <!-- ═══════ PAGE 1: ANSWER SHEET ═══════ -->
-          <div class="exam-page exam-page-answer">
+          <div class="exam-page exam-page-answer" style="position:relative; height: 297mm; padding: 14mm;">
             <div class="corner-marker top-left"></div>
             <div class="corner-marker top-right"></div>
             <div class="corner-marker bottom-left"></div>
             <div class="corner-marker bottom-right"></div>
 
-            <!-- QR top-right -->
-            <div class="exam-qr-corner exam-qr-top-right">
-              <div id="qr-code-tr"></div>
-            </div>
-
-            <div class="exam-sheet-header">
+            <div class="exam-sheet-header" style="margin-bottom:8px; padding-bottom:8px; border-bottom: 2px solid #1E293B; padding-right: 0;">
               <div class="exam-sheet-info">
-                <h2>${Utils.renderMarkdown(d.title)}</h2>
-                <div class="exam-meta">
-                  <div class="exam-meta-item"><strong>Asignatura:</strong> ${Utils.renderMarkdown(d.subject || 'General')}</div>
-                  <div class="exam-meta-item"><strong>Fecha:</strong> ${today}</div>
-                  <div class="exam-meta-item"><strong>Preguntas:</strong> ${numQ}</div>
+                <h2 style="font-size: 1.25rem; margin-bottom: 4px;">${Utils.renderMarkdown(d.title)}</h2>
+                <div style="display: flex; gap: 16px; font-size: 0.75rem; color: #475569;">
+                  <div><strong>Asignatura:</strong> ${Utils.renderMarkdown(d.subject || 'General')}</div>
+                  <div><strong>Fecha:</strong> ${today}</div>
+                  <div><strong>Preguntas:</strong> ${numQ}</div>
                 </div>
               </div>
             </div>
 
-            <div class="student-line-section">
-              <div class="student-line-row">
-                <strong>Nombre:</strong> <span class="student-line-blank"></span>
+            <div class="student-line-section" style="margin-bottom:8px; padding-bottom:8px; border-bottom: 1px solid #CBD5E1; padding-right: 0;">
+              <div style="display: flex; gap: 8px; font-size: 0.8125rem; margin-bottom: 8px; align-items: baseline;">
+                <strong>Nombre:</strong> <div style="flex: 1; border-bottom: 1.5px solid #94A3B8;"></div>
               </div>
-              <div class="student-line-row">
-                <strong>Grupo:</strong> <span class="student-line-blank short"></span>
-                <strong style="margin-left:24px;">Fecha:</strong> <span class="student-line-blank short"></span>
+              <div style="display: flex; gap: 8px; font-size: 0.8125rem; align-items: baseline;">
+                <strong>Grupo:</strong> <div style="width: 80px; border-bottom: 1.5px solid #94A3B8;"></div>
+                <strong style="margin-left:16px;">Fecha:</strong> <div style="width: 80px; border-bottom: 1.5px solid #94A3B8;"></div>
               </div>
             </div>
 
-            <div class="answer-instructions">
-              <div class="instructions-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                Instrucciones
+            <div class="answer-instructions" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px;">
+              <div style="font-size: 0.6875rem; font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                  INSTRUCCIONES
               </div>
-              <ul class="instructions-list">
-                <li>Rellena completamente el círculo de la respuesta correcta con bolígrafo negro o azul.</li>
-                <li>Marca <strong>una sola respuesta</strong> por pregunta.</li>
-                <li>No dobles ni arrugues esta hoja.</li>
+              <ul style="font-size: 0.65rem; color: #475569; padding-left: 14px; margin: 0;">
+                <li>Rellena completamente el círculo con rotulador, bolígrafo negro o azul.</li>
+                <li>Marca <strong>una sola respuesta</strong> por pregunta. No dobles esta hoja.</li>
               </ul>
             </div>
 
-            <div class="answer-grid-section">
-              <div class="answer-grid-title">Hoja de Respuestas</div>
-              <div class="answer-grid">${gridHtml}</div>
+            <!-- RIGID OMR BLOCK -->
+            <div id="omr-anchor" style="position: absolute; bottom: 14mm; left: 14mm; width: 182mm; height: 130mm; border: 2.5px solid #1E293B; border-radius: 8px; background: white; box-sizing: border-box;">
+                
+                <div class="exam-qr-corner" style="position: absolute; top: 8mm; right: 8mm; width: 26.46mm; height: 26.46mm;">
+                  <div id="qr-code-tr"></div>
+                </div>
+
+                <div style="position: absolute; top: 8mm; left: 8mm; font-weight: 800; font-size: 0.9rem; color: #1E293B; letter-spacing: 0.05em; background: #E2E8F0; padding: 4px 10px; border-radius: 4px;">
+                    HOJA DE RESPUESTAS OFICIAL
+                </div>
+                
+                <!-- Bubbles Container -->
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                    ${gridHtml}
+                </div>
             </div>
           </div>
 
@@ -124,6 +140,7 @@ const ExamPrinter = {
 
     this.generateQRCodes();
   },
+
 
   generateQRCodes() {
     const qrData = JSON.stringify({ app: 'handsup', examId: this.examId, v: 2 });
