@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/game.css">
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✋</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
 
 <body>
@@ -49,8 +50,11 @@
                     <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
                     <rect x="7" y="7" width="10" height="10" />
                 </svg>
-                <div class="scan-instruction-text">Abre el escáner en tu móvil para registrar respuestas</div>
-                <div class="scan-instruction-url" id="scanUrl">scan-mobile.html</div>
+                <div class="scan-instruction-text">Escanea para usar este móvil como cámara</div>
+                <div
+                    style="background: white; padding: 10px; border-radius: 8px; display: inline-block; margin-top: 16px;">
+                    <canvas id="hostQrCode"></canvas>
+                </div>
             </div>
 
             <button class="lobby-start-btn" id="startGameBtn" onclick="startGame()">
@@ -69,8 +73,9 @@
             <div class="game-top-bar">
                 <div class="game-question-num" id="questionNum">Pregunta 1 / 10</div>
                 <div class="game-timer">
-                    <div class="timer-circle" id="timerCircle">
-                        <span id="timerValue">20</span>
+                    <div class="timer-circle" id="timerCircle"
+                        style="width:auto; padding:0 24px; border-radius:var(--radius-full); background:rgba(255,255,255,0.1)">
+                        <span id="timerValue">--:--</span>
                     </div>
                 </div>
                 <div class="game-responses">
@@ -89,7 +94,7 @@
             <div style="text-align:center;padding-bottom:20px">
                 <button class="btn btn-secondary" onclick="skipTimer()" id="skipTimerBtn"
                     style="border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.6)">
-                    Cerrar respuestas →
+                    Cerrar respuestas y ver resultados →
                 </button>
             </div>
         </div>
@@ -176,7 +181,7 @@
         let currentQuestion = 0;
         let responses = {}; // { studentId: { answer, timestamp } }
         let timerInterval = null;
-        let timeLeft = 0;
+        let firstResponseTime = null;
         let gameId = null;
         let gamePin = '';
 
@@ -229,7 +234,15 @@
             document.getElementById('gamePin').textContent = gamePin;
             document.getElementById('lobbyInfo').textContent = `Quiz: ${quiz.title} · ${quiz.questions.length} preguntas`;
             document.getElementById('lobbyCount').textContent = students.length;
-            document.getElementById('scanUrl').textContent = `scan-mobile.html?game=${gameId}`;
+
+            // Generate QR Code for mobile scanning
+            const fullScanUrl = window.location.origin + window.location.pathname.replace('game-host.html', 'scan-mobile.html') + '?game=' + gameId;
+            new QRious({
+                element: document.getElementById('hostQrCode'),
+                value: fullScanUrl,
+                size: 150,
+                level: 'H'
+            });
 
             // Show players from class
             const playersContainer = document.getElementById('lobbyPlayers');
@@ -295,41 +308,28 @@
         </div>
       `).join('');
 
-            // Start timer
-            timeLeft = quiz.timePerQuestion || 20;
-            document.getElementById('timerValue').textContent = timeLeft;
+            document.getElementById('timerValue').textContent = '--:--';
             document.getElementById('timerCircle').className = 'timer-circle';
+            clearInterval(timerInterval);
+            firstResponseTime = null;
 
             // Update game doc
             if (gameId) {
                 updateDoc(doc(db, 'games', gameId), {
                     status: 'question',
                     currentQuestion: index,
-                    responses: {},
-                    questionStartedAt: serverTimestamp()
+                    responses: {}
                 }).catch(console.error);
             }
-
-            startTimer();
         }
 
         function startTimer() {
-            clearInterval(timerInterval);
+            if (timerInterval) return; // already started
+            firstResponseTime = Date.now();
             timerInterval = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timerValue').textContent = timeLeft;
-
-                if (timeLeft <= 5) {
-                    document.getElementById('timerCircle').className = 'timer-circle danger';
-                } else if (timeLeft <= 10) {
-                    document.getElementById('timerCircle').className = 'timer-circle warning';
-                }
-
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    endQuestion();
-                }
-            }, 1000);
+                const elapsed = (Date.now() - firstResponseTime) / 1000;
+                document.getElementById('timerValue').textContent = elapsed.toFixed(1) + 's';
+            }, 100);
         }
 
         window.skipTimer = () => {
@@ -341,10 +341,13 @@
         window.registerResponse = (studentId, answer) => {
             if (responses[studentId]) return; // Already responded
 
+            if (!firstResponseTime) {
+                startTimer();
+            }
+
             responses[studentId] = {
                 answer,
-                timeLeft,
-                timestamp: Date.now()
+                timeElapsed: firstResponseTime ? (Date.now() - firstResponseTime) / 1000 : 0
             };
 
             document.getElementById('responseCount').textContent = Object.keys(responses).length;
@@ -399,9 +402,9 @@
             const answeredStudents = Object.entries(responses);
             for (const [studentId, resp] of answeredStudents) {
                 if (resp.answer === labels[correctIdx]) {
-                    // Score based on time remaining
-                    const timeBonus = resp.timeLeft / (quiz.timePerQuestion || 20);
-                    const points = Math.round((quiz.pointsPerQuestion || 1000) * (0.5 + 0.5 * timeBonus));
+                    // Flat 1000 points or slight decay based on speed
+                    const speedFactor = Math.max(0, 1 - (resp.timeElapsed / 30)); // 30s to get 0 bonus
+                    const points = Math.round((quiz.pointsPerQuestion || 1000) * (0.8 + 0.2 * speedFactor));
                     if (scores[studentId]) {
                         scores[studentId].score += points;
                         scores[studentId].streak++;

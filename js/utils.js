@@ -363,7 +363,7 @@ export const icons = {
 // Navbar HTML generator
 export function getNavbarHTML(activePage = '') {
     return `
-    <nav class="navbar">
+    <nav class="navbar" id="appNavbar">
       <div class="navbar-inner">
         <a href="dashboard.html" class="navbar-brand">
           ${icons.hand}
@@ -377,5 +377,17 @@ export function getNavbarHTML(activePage = '') {
         </div>
       </div>
     </nav>
+    <script>
+      (function() {
+        const nb = document.getElementById('appNavbar');
+        if (nb) {
+          window.addEventListener('scroll', () => {
+            nb.classList.toggle('scrolled', window.scrollY > 10);
+          });
+          // Initial check
+          nb.classList.toggle('scrolled', window.scrollY > 10);
+        }
+      })();
+    </script>
   `;
 }

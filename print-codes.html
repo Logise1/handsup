@@ -1,3 +1,4 @@
+vantar
 <!DOCTYPE html>
 <html lang="es">
 
@@ -10,6 +11,7 @@
     <link rel="stylesheet" href="css/codes.css">
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✋</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
 
 <body>
@@ -131,7 +133,7 @@
 
     <script type="module">
         import { auth, db, onAuthStateChanged, signOut, collection, getDocs, getDoc, doc, query, where } from './js/firebase-init.js';
-        import { getNavbarHTML, showToast, generateHandsUpCode, drawHandsUpCode } from './js/utils.js';
+        import { getNavbarHTML, showToast } from './js/utils.js';
 
         document.getElementById('navContainer').innerHTML = getNavbarHTML('');
 
@@ -210,7 +212,76 @@
             printGrid.innerHTML = '';
 
             students.forEach(student => {
-                const grid = generateHandsUpCode(student.codeNumber);
+                // Create QR code
+                const qrCanvas = new QRious({
+                    value: JSON.stringify({ id: student.id }),
+                    size: 110,
+                    level: 'H'
+                }).canvas;
+
+                // Function to draw card on a canvas
+                const drawCard = (canvasSize, qrSize) => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = canvasSize;
+                    canvas.height = canvasSize + 40; // extra space for name
+                    const ctx = canvas.getContext('2d');
+
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // Outer border
+                    ctx.strokeStyle = '#E2E8F0';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(2, 2, canvasSize - 4, canvasSize - 4);
+
+                    // Draw QR in center
+                    const offset = (canvasSize - qrSize) / 2;
+                    ctx.drawImage(qrCanvas, 0, 0, qrCanvas.width, qrCanvas.height, offset, offset, qrSize, qrSize);
+
+                    // Draw labels
+                    const fontSize = Math.floor(canvasSize * 0.12);
+                    ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    const labelOffset = fontSize;
+                    const center = canvasSize / 2;
+
+                    // A (Top)
+                    ctx.fillStyle = 'var(--answer-a, #E74C3C)';
+                    ctx.fillText('A', center, labelOffset);
+
+                    // B (Right)
+                    ctx.fillStyle = 'var(--answer-b, #3498DB)';
+                    ctx.save();
+                    ctx.translate(canvasSize - labelOffset, center);
+                    ctx.rotate(Math.PI / 2);
+                    ctx.fillText('B', 0, 0);
+                    ctx.restore();
+
+                    // C (Bottom)
+                    ctx.fillStyle = 'var(--answer-c, #F1C40F)';
+                    ctx.save();
+                    ctx.translate(center, canvasSize - labelOffset);
+                    ctx.rotate(Math.PI);
+                    ctx.fillText('C', 0, 0);
+                    ctx.restore();
+
+                    // D (Left)
+                    ctx.fillStyle = 'var(--answer-d, #2ECC71)';
+                    ctx.save();
+                    ctx.translate(labelOffset, center);
+                    ctx.rotate(-Math.PI / 2);
+                    ctx.fillText('D', 0, 0);
+                    ctx.restore();
+
+                    // Draw student name
+                    ctx.fillStyle = '#334155';
+                    ctx.font = `bold ${Math.floor(canvasSize * 0.08)}px Inter, sans-serif`;
+                    ctx.fillText(`${student.name}`, center, canvasSize + 20);
+
+                    return canvas;
+                };
 
                 // Preview card
                 const card = document.createElement('div');
@@ -218,26 +289,15 @@
 
                 const canvasWrapper = document.createElement('div');
                 canvasWrapper.className = 'code-canvas-wrapper';
-
-                const canvas = document.createElement('canvas');
-                drawHandsUpCode(canvas, grid, `${student.name} (#${student.codeNumber})`, 160);
-                canvasWrapper.appendChild(canvas);
-
-                const name = document.createElement('div');
-                name.className = 'code-student-name';
-                name.textContent = student.name;
+                canvasWrapper.appendChild(drawCard(160, 100));
 
                 card.appendChild(canvasWrapper);
-                card.appendChild(name);
                 preview.appendChild(card);
 
                 // Print version
                 const printItem = document.createElement('div');
                 printItem.className = 'print-code-item';
-
-                const printCanvas = document.createElement('canvas');
-                drawHandsUpCode(printCanvas, grid, `${student.name} (#${student.codeNumber})`, 200);
-                printItem.appendChild(printCanvas);
+                printItem.appendChild(drawCard(220, 140));
                 printGrid.appendChild(printItem);
             });
         };
