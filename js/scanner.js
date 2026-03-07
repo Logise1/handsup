@@ -188,7 +188,8 @@ const Scanner = {
                     if (data.app === 'handsup' && data.examId) {
                         this.scanning = false;
                         Utils.showToast('¡Examen detectado!', 'success');
-                        this.loadExamForGrading(data.examId);
+                        const detectedAnswers = this.detectBubbles(imageData, code.location, data);
+                        this.loadExamForGrading(data.examId, detectedAnswers);
                         return;
                     }
                 } catch (e) { /* not our QR */ }
@@ -212,13 +213,21 @@ const Scanner = {
         } catch (err) { console.error(err); }
     },
 
-    async loadExamForGrading(examId) {
+    async loadExamForGrading(examId, detectedAnswers = {}) {
         Utils.showLoading('Cargando examen...');
         try {
             const doc = await db.collection('handsup_exams').doc(examId).get();
             if (!doc.exists) { Utils.showToast('Examen no encontrado', 'error'); return; }
             this.detectedExam = { id: examId, ...doc.data() };
             this.studentAnswers = {};
+
+            const numQ = this.detectedExam.questions.length;
+            for (let i = 0; i < numQ; i++) {
+                if (detectedAnswers[i] !== undefined) {
+                    this.studentAnswers[i] = detectedAnswers[i];
+                }
+            }
+
             this.renderAnswerInput();
             this.loadStudentsForExam();
             document.getElementById('scan-result-section')?.classList.remove('hidden');
@@ -240,7 +249,7 @@ const Scanner = {
         <span class="q-label">${i + 1}</span>
         <div class="answer-options">
           ${letters.map((l, j) => `
-            <button class="answer-option-btn" data-q="${i}" data-o="${j}" onclick="Scanner.selectAnswer(${i},${j},this)">${l}</button>
+            <button class="answer-option-btn ${this.studentAnswers[i] === j ? 'selected' : ''}" data-q="${i}" data-o="${j}" onclick="Scanner.selectAnswer(${i},${j},this)">${l}</button>
           `).join('')}
         </div>
       </div>
@@ -322,5 +331,92 @@ const Scanner = {
             if (o === correctO) btn.classList.add('correct');
             else if (answers[q] === o) btn.classList.add('incorrect');
         });
+    },
+
+    // ── Bubble Detection (OMR) ──────────────────
+    detectBubbles(imgData, qrLocation, examData) {
+        const w = imgData.width, h = imgData.height;
+        const pixels = imgData.data;
+        const detected = {};
+
+        try {
+            const qrSizeMM = 26.46;
+            const srcCorners = [
+                { x: 169.54, y: 14 },
+                { x: 196, y: 14 },
+                { x: 196, y: 40.46 },
+                { x: 169.54, y: 40.46 }
+            ];
+
+            const dstCorners = [
+                { x: qrLocation.topLeftCorner.x, y: qrLocation.topLeftCorner.y },
+                { x: qrLocation.topRightCorner.x, y: qrLocation.topRightCorner.y },
+                { x: qrLocation.bottomRightCorner.x, y: qrLocation.bottomRightCorner.y },
+                { x: qrLocation.bottomLeftCorner.x, y: qrLocation.bottomLeftCorner.y }
+            ];
+
+            const homography = Utils.math.getHomography(srcCorners, dstCorners);
+            if (!homography) return {};
+
+            const pxPerMM = (Math.abs(dstCorners[1].x - dstCorners[0].x) + Math.abs(dstCorners[3].y - dstCorners[0].y)) / 2 / qrSizeMM;
+            const bubbleRadiusPx = Math.max(3, Math.round(pxPerMM * 2.0));
+
+            const getDarkness = (px, py) => {
+                const cx = Math.round(px), cy = Math.round(py);
+                const r = bubbleRadiusPx;
+                let total = 0, count = 0;
+                for (let dy = -r; dy <= r; dy++) {
+                    for (let dx = -r; dx <= r; dx++) {
+                        if (dx * dx + dy * dy <= r * r) {
+                            const x = cx + dx, y = cy + dy;
+                            if (x >= 0 && x < w && y >= 0 && y < h) {
+                                const idx = (y * w + x) * 4;
+                                total += pixels[idx] * 0.299 + pixels[idx + 1] * 0.587 + pixels[idx + 2] * 0.114;
+                                count++;
+                            }
+                        }
+                    }
+                }
+                return count > 0 ? total / count : 255;
+            };
+
+            for (let q = 0; q < 50; q++) {
+                const col = q % 5;
+                const row = Math.floor(q / 5);
+
+                const nominalCx = 14 + col * 36.4 + 7.2;
+                const nominalCy = 96.6 + row * 5.82 + 2.25;
+
+                let maxContrast = -1;
+                let bestOpt = -1;
+                let absoluteDarkest = 255;
+
+                for (let yShift of [0, 2, -2, 4, -4, 6, -6, 8, -8]) {
+                    let darknesses = [];
+                    for (let opt = 0; opt < 4; opt++) {
+                        const mmP = { x: nominalCx + opt * 4.8, y: nominalCy + yShift };
+                        const camP = Utils.math.applyHomography(mmP, homography);
+                        darknesses.push(getDarkness(camP.x, camP.y));
+                    }
+                    let minD = Math.min(...darknesses);
+                    let avgOthers = (darknesses.reduce((a, b) => a + b, 0) - minD) / 3;
+                    let contrast = avgOthers - minD;
+
+                    if (contrast > maxContrast && minD < 140) {
+                        maxContrast = contrast;
+                        bestOpt = darknesses.indexOf(minD);
+                        absoluteDarkest = minD;
+                    }
+                }
+
+                if (maxContrast > 25 && absoluteDarkest < 140) {
+                    detected[q] = bestOpt;
+                }
+            }
+        } catch (e) {
+            console.warn('Bubble detection error:', e);
+        }
+
+        return detected;
     }
 };

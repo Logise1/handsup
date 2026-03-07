@@ -256,5 +256,67 @@ const Utils = {
                 card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
             });
         });
+    },
+
+    // ── OMR (Optical Mark Recognition) Math utilities ──
+    math: {
+        getHomography(src, dst) {
+            let A = [];
+            for (let i = 0; i < 4; i++) {
+                let x = src[i].x, y = src[i].y;
+                let u = dst[i].x, v = dst[i].y;
+                A.push([x, y, 1, 0, 0, 0, -u * x, -u * y, u]);
+                A.push([0, 0, 0, x, y, 1, -v * x, -v * y, v]);
+            }
+
+            let M = [], B = [];
+            for (let i = 0; i < 8; i++) {
+                M.push(A[i].slice(0, 8));
+                B.push(-A[i][8]);
+            }
+
+            let h = this.gaussJordan(M, B);
+            if (!h) return null;
+            h.push(1);
+            return h;
+        },
+
+        gaussJordan(A, b) {
+            let n = A.length;
+            let M = [];
+            for (let i = 0; i < n; i++) M.push([...A[i], b[i]]);
+
+            for (let i = 0; i < n; i++) {
+                let maxRow = i;
+                for (let j = i + 1; j < n; j++) {
+                    if (Math.abs(M[j][i]) > Math.abs(M[maxRow][i])) maxRow = j;
+                }
+                let temp = M[i];
+                M[i] = M[maxRow];
+                M[maxRow] = temp;
+
+                let div = M[i][i];
+                if (Math.abs(div) < 1e-10) return null;
+
+                for (let j = i; j <= n; j++) M[i][j] /= div;
+                for (let j = 0; j < n; j++) {
+                    if (i !== j) {
+                        let factor = M[j][i];
+                        for (let k = i; k <= n; k++) M[j][k] -= factor * M[i][k];
+                    }
+                }
+            }
+            let x = [];
+            for (let i = 0; i < n; i++) x.push(M[i][n]);
+            return x;
+        },
+
+        applyHomography(p, h) {
+            let w = h[6] * p.x + h[7] * p.y + h[8];
+            return {
+                x: (h[0] * p.x + h[1] * p.y + h[2]) / w,
+                y: (h[3] * p.x + h[4] * p.y + h[5]) / w
+            };
+        }
     }
 };

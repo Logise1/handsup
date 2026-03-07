@@ -613,97 +613,80 @@
                 const detected = {};
 
                 try {
-                    // Get QR center and size to estimate page bounds
-                    const qrCorners = [qrLocation.topLeftCorner, qrLocation.topRightCorner,
-                    qrLocation.bottomRightCorner, qrLocation.bottomLeftCorner];
-                    const qrCX = qrCorners.reduce((s, c) => s + c.x, 0) / 4;
-                    const qrCY = qrCorners.reduce((s, c) => s + c.y, 0) / 4;
-                    const qrSize = Math.sqrt(
-                        Math.pow(qrCorners[1].x - qrCorners[0].x, 2) +
-                        Math.pow(qrCorners[1].y - qrCorners[0].y, 2)
-                    );
+                    // QR version 2 (200x200 internally, 100x100px CSS -> 26.46mm on A4)
+                    const qrSizeMM = 26.46;
 
-                    // Determine QR version
-                    const qrVersion = examData.v || 1;
+                    // Coordinates of the 4 QR corners on the 210x297mm A4 (origin top-left)
+                    const srcCorners = [
+                        { x: 169.54, y: 14 },                 // Top Left
+                        { x: 196, y: 14 },                    // Top Right
+                        { x: 196, y: 40.46 },                 // Bottom Right
+                        { x: 169.54, y: 40.46 }               // Bottom Left
+                    ];
 
-                    // Physical size and offset of the QR center
-                    let printedQrSizeMM, qrCenterOffsetX, qrCenterOffsetY;
-                    if (qrVersion >= 2) {
-                        // v2: 100px QR -> ~26.46mm. Margin is 14mm. Center is ~27.23mm from edge.
-                        printedQrSizeMM = 26.46;
-                        qrCenterOffsetX = 27.23;
-                        qrCenterOffsetY = 27.23;
-                    } else {
-                        // v1: 70px QR -> ~18.5mm. Original logic used 13mm offset.
-                        printedQrSizeMM = 18.5;
-                        qrCenterOffsetX = 13.0; // Historically 13mm in v1
-                        qrCenterOffsetY = 13.0;
-                    }
+                    const dstCorners = [
+                        { x: qrLocation.topLeftCorner.x, y: qrLocation.topLeftCorner.y },
+                        { x: qrLocation.topRightCorner.x, y: qrLocation.topRightCorner.y },
+                        { x: qrLocation.bottomRightCorner.x, y: qrLocation.bottomRightCorner.y },
+                        { x: qrLocation.bottomLeftCorner.x, y: qrLocation.bottomLeftCorner.y }
+                    ];
 
-                    const pageWidthEst = qrSize * (210 / printedQrSizeMM);
+                    const homography = Utils.math.getHomography(srcCorners, dstCorners);
+                    if (!homography) return {};
 
-                    // Did we scan Top-Right or Bottom-Left?
-                    // If QR center is on the right half of the image, we assume Top-Right.
-                    const isTopRight = qrCX > w / 2;
-                    let pageTLX, pageTLY;
-                    if (isTopRight) {
-                        pageTLX = qrCX - (pageWidthEst * (210 - qrCenterOffsetX) / 210);
-                        pageTLY = qrCY - (pageWidthEst * qrCenterOffsetY / 210);
-                    } else {
-                        // QR is Bottom-Left (from v1 prints)
-                        pageTLX = qrCX - (pageWidthEst * qrCenterOffsetX / 210);
-                        pageTLY = qrCY - (pageWidthEst * (297 - qrCenterOffsetY) / 210);
-                    }
+                    const pxPerMM = (Math.abs(dstCorners[1].x - dstCorners[0].x) + Math.abs(dstCorners[3].y - dstCorners[0].y)) / 2 / qrSizeMM;
+                    const bubbleRadiusPx = Math.max(3, Math.round(pxPerMM * 2.0));
 
-                    // Answer grid layout constants
-                    const gridStartX = pageTLX + (pageWidthEst * 16 / 210);
-                    const gridStartY = pageTLY + (pageWidthEst * 80 / 210);
-                    const colWidth = pageWidthEst * 35 / 210;
-                    const rowHeight = pageWidthEst * 5.5 / 210;
-                    const numStartOffset = pageWidthEst * 7 / 210;
-                    const bubbleSpacing = pageWidthEst * 4.5 / 210;
-                    const bubbleRadius = pageWidthEst * 2 / 210;
-
-                    // Helper: get average darkness at a point
-                    const getDarkness = (cx, cy) => {
-                        const r = Math.max(2, Math.round(bubbleRadius * 0.6));
+                    const getDarkness = (px, py) => {
+                        const cx = Math.round(px), cy = Math.round(py);
+                        const r = bubbleRadiusPx;
                         let total = 0, count = 0;
                         for (let dy = -r; dy <= r; dy++) {
                             for (let dx = -r; dx <= r; dx++) {
-                                const px = Math.round(cx + dx), py = Math.round(cy + dy);
-                                if (px >= 0 && px < w && py >= 0 && py < h) {
-                                    const idx = (py * w + px) * 4;
-                                    const gray = pixels[idx] * 0.299 + pixels[idx + 1] * 0.587 + pixels[idx + 2] * 0.114;
-                                    total += gray;
-                                    count++;
+                                if (dx * dx + dy * dy <= r * r) {
+                                    const x = cx + dx, y = cy + dy;
+                                    if (x >= 0 && x < w && y >= 0 && y < h) {
+                                        const idx = (y * w + x) * 4;
+                                        total += pixels[idx] * 0.299 + pixels[idx + 1] * 0.587 + pixels[idx + 2] * 0.114;
+                                        count++;
+                                    }
                                 }
                             }
                         }
                         return count > 0 ? total / count : 255;
                     };
 
-                    // For each question, check 4 bubbles, pick darkest if below threshold
-                    // We don't know total questions yet, try up to 50
                     for (let q = 0; q < 50; q++) {
                         const col = q % 5;
                         const row = Math.floor(q / 5);
-                        const baseX = gridStartX + col * colWidth + numStartOffset;
-                        const baseY = gridStartY + row * rowHeight;
 
-                        const darknesses = [];
-                        for (let b = 0; b < 4; b++) {
-                            const bx = baseX + b * bubbleSpacing;
-                            const by = baseY;
-                            darknesses.push(getDarkness(bx, by));
+                        const nominalCx = 14 + col * 36.4 + 7.2;
+                        const nominalCy = 96.6 + row * 5.82 + 2.25;
+
+                        let maxContrast = -1;
+                        let bestOpt = -1;
+                        let absoluteDarkest = 255;
+
+                        for (let yShift of [0, 2, -2, 4, -4, 6, -6, 8, -8]) {
+                            let darknesses = [];
+                            for (let opt = 0; opt < 4; opt++) {
+                                const mmP = { x: nominalCx + opt * 4.8, y: nominalCy + yShift };
+                                const camP = Utils.math.applyHomography(mmP, homography);
+                                darknesses.push(getDarkness(camP.x, camP.y));
+                            }
+                            let minD = Math.min(...darknesses);
+                            let avgOthers = (darknesses.reduce((a, b) => a + b, 0) - minD) / 3;
+                            let contrast = avgOthers - minD;
+
+                            if (contrast > maxContrast && minD < 140) {
+                                maxContrast = contrast;
+                                bestOpt = darknesses.indexOf(minD);
+                                absoluteDarkest = minD;
+                            }
                         }
 
-                        // Find darkest bubble
-                        const minDark = Math.min(...darknesses);
-                        const avgOther = darknesses.reduce((s, v) => s + v, 0) / 4;
-
-                        // If darkest is significantly darker than average (filled bubble)
-                        if (minDark < 140 && (avgOther - minDark) > 30) {
-                            detected[q] = darknesses.indexOf(minDark);
+                        if (maxContrast > 25 && absoluteDarkest < 140) {
+                            detected[q] = bestOpt;
                         }
                     }
                 } catch (e) {
