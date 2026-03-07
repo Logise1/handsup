@@ -35,22 +35,24 @@ const ExamPrinter = {
     const today = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
     const numQ = d.questions.length;
 
-    // Build answer grid with absolute mm positioning
+    // Build answer grid with absolute mm positioning (Centered in OMR Block)
     let gridHtml = '';
-    for (let i = 0; i < 50; i++) {
+    const maxQ = Math.min(numQ, 50); // Hard maximum 50, but usually actual question count (e.g. 7)
+
+    for (let i = 0; i < maxQ; i++) {
       const col = i % 5;
       const row = Math.floor(i / 5);
-      const x = 8 + col * 27;
-      const y = 24 + row * 9;
+      const x = 32 + col * 26; // Starts at 32mm, spans beautifully inside the 182mm block
+      const y = 30 + row * 8;
 
       let bubblesHtml = letters.map((l, j) => {
-        const bx = 6.5 + j * 5.2;
-        return `<span class="ag-bubble" style="position: absolute; left: ${bx}mm; top: 0; width: 4.2mm; height: 4.2mm; border: 0.4mm solid #475569; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 0.5rem; color: #475569; padding: 0;">${l}</span>`;
+        const bx = 6 + j * 4.6;
+        return `<span class="ag-bubble" style="position: absolute; left: ${bx}mm; top: 0; width: 4mm; height: 4mm; border: 0.45mm solid #475569; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 0.55rem; color: #475569; padding: 0; font-weight:600;">${l}</span>`;
       }).join('');
 
       gridHtml += `
-          <div class="answer-grid-item" style="position: absolute; left: ${x}mm; top: ${y}mm; width: 28mm; height: 4.2mm;">
-            <span class="ag-num" style="position: absolute; left: 0; top: 0; width: 4.5mm; text-align: right; font-weight: bold; font-size: 0.75rem; line-height: 4.2mm; color: #1E293B;">${i + 1}</span>
+          <div class="answer-grid-item" style="position: absolute; left: ${x}mm; top: ${y}mm; width: 25mm; height: 4.2mm;">
+            <span class="ag-num" style="position: absolute; left: 0; top: 0; width: 5mm; text-align: right; font-weight: bold; font-size: 0.75rem; line-height: 4.2mm; color: #1E293B;">${i + 1}</span>
             ${bubblesHtml}
           </div>
         `;
@@ -113,11 +115,13 @@ const ExamPrinter = {
             <!-- RIGID OMR BLOCK -->
             <div id="omr-anchor" style="position: absolute; bottom: 14mm; left: 14mm; width: 182mm; height: 130mm; border: 2.5px solid #1E293B; border-radius: 8px; background: white; box-sizing: border-box;">
                 
-                <div class="exam-qr-corner" style="position: absolute; top: 8mm; right: 8mm; width: 26.46mm; height: 26.46mm;">
-                  <div id="qr-code-tr"></div>
-                </div>
+                <!-- 4 QR Corners -->
+                <div class="exam-qr-corner" style="position: absolute; top: 4mm; left: 4mm; width: 22mm; height: 22mm;" id="qr-tl"></div>
+                <div class="exam-qr-corner" style="position: absolute; top: 4mm; right: 4mm; width: 22mm; height: 22mm;" id="qr-tr"></div>
+                <div class="exam-qr-corner" style="position: absolute; bottom: 4mm; left: 4mm; width: 22mm; height: 22mm;" id="qr-bl"></div>
+                <div class="exam-qr-corner" style="position: absolute; bottom: 4mm; right: 4mm; width: 22mm; height: 22mm;" id="qr-br"></div>
 
-                <div style="position: absolute; top: 8mm; left: 8mm; font-weight: 800; font-size: 0.9rem; color: #1E293B; letter-spacing: 0.05em; background: #E2E8F0; padding: 4px 10px; border-radius: 4px;">
+                <div style="position: absolute; top: 8mm; left: 28mm; font-weight: 800; font-size: 0.9rem; color: #1E293B; letter-spacing: 0.05em; background: #E2E8F0; padding: 4px 10px; border-radius: 4px;">
                     HOJA DE RESPUESTAS OFICIAL
                 </div>
                 
@@ -143,19 +147,24 @@ const ExamPrinter = {
 
 
   generateQRCodes() {
-    const qrData = JSON.stringify({ app: 'handsup', examId: this.examId, v: 2 });
     if (typeof QRCode === 'undefined') return;
 
-    // Top-right QR
-    const trEl = document.getElementById('qr-code-tr');
-    if (trEl) {
-      trEl.innerHTML = '';
-      new QRCode(trEl, {
-        text: qrData, width: 200, height: 200,
+    const makeQR = (id, loc) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = '';
+      new QRCode(el, {
+        text: JSON.stringify({ app: 'handsup', examId: this.examId, loc: loc }),
+        width: 150, height: 150,
         colorDark: '#000000', colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
+        correctLevel: QRCode.CorrectLevel.L
       });
-    }
+    };
+
+    makeQR('qr-tl', 'TL');
+    makeQR('qr-tr', 'TR');
+    makeQR('qr-bl', 'BL');
+    makeQR('qr-br', 'BR');
   },
 
   printExam() {

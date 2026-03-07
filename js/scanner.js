@@ -185,10 +185,15 @@ const Scanner = {
             if (code) {
                 try {
                     const data = JSON.parse(code.data);
-                    if (data.app === 'handsup' && data.examId) {
+                    if (data.app === 'handsup' && data.examId && data.loc) {
+                        const detectedAnswers = this.detectBubbles(imageData, data);
+                        if (!detectedAnswers) {
+                            // Keep scanning until all 4 QRs are in view
+                            requestAnimationFrame(() => this.scanLoop());
+                            return;
+                        }
                         this.scanning = false;
                         Utils.showToast('¡Examen detectado!', 'success');
-                        const detectedAnswers = this.detectBubbles(imageData, code.location, data);
                         this.loadExamForGrading(data.examId, detectedAnswers);
                         return;
                     }
@@ -334,33 +339,81 @@ const Scanner = {
     },
 
     // ── Bubble Detection (OMR) ──────────────────
-    detectBubbles(imgData, qrLocation, examData) {
+    detectBubbles(imgData, examData) {
         const w = imgData.width, h = imgData.height;
         const pixels = imgData.data;
         const detected = {};
 
         try {
-            const qrSizeMM = 26.46;
+            const qW = Math.floor(w * 0.55);
+            const qH = Math.floor(h * 0.55);
+
+            const scanRegion = (sx, sy) => {
+                const sub = new Uint8ClampedArray(qW * qH * 4);
+                for (let y = 0; y < qH; y++) {
+                    const srcOff = ((sy + y) * w + sx) * 4;
+                    const dstOff = y * qW * 4;
+                    sub.set(pixels.subarray(srcOff, srcOff + qW * 4), dstOff);
+                }
+                const res = jsQR(sub, qW, qH, { inversionAttempts: 'dontInvert' });
+                if (res) {
+                    try {
+                        const d = JSON.parse(res.data);
+                        if (d.app === 'handsup' && d.loc) {
+                            return {
+                                loc: d.loc,
+                                center: {
+                                    x: sx + (res.location.topLeftCorner.x + res.location.bottomRightCorner.x) / 2,
+                                    y: sy + (res.location.topLeftCorner.y + res.location.bottomRightCorner.y) / 2
+                                },
+                            };
+                        }
+                    } catch (e) { }
+                }
+                return null;
+            };
+
+            const foundAnchors = [
+                scanRegion(0, 0),
+                scanRegion(w - qW, 0),
+                scanRegion(0, h - qH),
+                scanRegion(w - qW, h - qH)
+            ].filter(Boolean);
+
+            const anchorMap = {};
+            foundAnchors.forEach(a => anchorMap[a.loc] = a.center);
+
+            if (Object.keys(anchorMap).length < 4) {
+                return null;
+            }
+
+            // Ideal centers in MM natively matched to printed exam sheet (182x130mm OMR block)
+            // 22mm QRs on 4mm margins. centers:
+            // TL: x=15,  y=15
+            // TR: x=167, y=15
+            // BR: x=167, y=115
+            // BL: x=15,  y=115
             const srcCorners = [
-                { x: 169.54, y: 14 },
-                { x: 196, y: 14 },
-                { x: 196, y: 40.46 },
-                { x: 169.54, y: 40.46 }
+                { x: 15, y: 15 },    // TL
+                { x: 167, y: 15 },   // TR
+                { x: 167, y: 115 },  // BR
+                { x: 15, y: 115 }    // BL
             ];
 
             const dstCorners = [
-                { x: qrLocation.topLeftCorner.x, y: qrLocation.topLeftCorner.y },
-                { x: qrLocation.topRightCorner.x, y: qrLocation.topRightCorner.y },
-                { x: qrLocation.bottomRightCorner.x, y: qrLocation.bottomRightCorner.y },
-                { x: qrLocation.bottomLeftCorner.x, y: qrLocation.bottomLeftCorner.y }
+                anchorMap['TL'],
+                anchorMap['TR'],
+                anchorMap['BR'],
+                anchorMap['BL']
             ];
 
             const homography = Utils.math.getHomography(srcCorners, dstCorners);
-            if (!homography) return {};
+            if (!homography) return null;
 
+            // OMR Block width is 182mm. Px distance from TL to TR anchor (152mm apart)
             const dist = (p1, p2) => Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-            const pxPerMM = (dist(dstCorners[0], dstCorners[1]) + dist(dstCorners[0], dstCorners[3])) / 2 / qrSizeMM;
-            const bubbleRadiusPx = Math.max(3, Math.round(pxPerMM * 1.5));
+            const pxPerMM = dist(anchorMap['TL'], anchorMap['TR']) / 152;
+            const bubbleRadiusPx = Math.max(2, Math.round(pxPerMM * 1.5));
 
             const getDarkness = (px, py) => {
                 const cx = Math.round(px), cy = Math.round(py);
@@ -381,24 +434,33 @@ const Scanner = {
                 return count > 0 ? total / count : 255;
             };
 
-            for (let q = 0; q < 50; q++) {
+            const numQ = examData.questions ? examData.questions.length : 50;
+
+            for (let q = 0; q < numQ; q++) {
                 const col = q % 5;
                 const row = Math.floor(q / 5);
 
-                // Nominal center of bubble A in mm (within the local OMR Block)
-                const nominalCx = 16.6 + col * 27.0;
-                const nominalCy = 26.1 + row * 9.0;
+                // mapping to the new generated HTML print coords!
+                // HTML: <div class="answer-grid-item" style="position: absolute; left: ${x}mm; top: ${y}mm; width: 25mm; height: 4.2mm;">
+                // Bubble container lefts are exactly: bx = 6 + j * 4.6 (where bx is left-edge of bubble)
+                // Width is 4mm. So Center X is bx + 2.0 = 8.0 + j * 4.6
+                const gridStartX = 32 + col * 26;
+                const gridStartY = 30 + row * 8;
+
+                // bubble is rendered at top: 0, height 4mm -> center Y = 2.0
+                const bubbleCy = gridStartY + 2.0;
 
                 let bestOpt = -1;
                 let absoluteDarkest = 255;
                 let highestLocalScore = -1;
 
-                // Micro-sweep (+/- 2.0mm) to compensate for lens distortion or folded paper
+                // Micro-sweep (+/- 2.0mm) 
                 for (let dy = -2.0; dy <= 2.0; dy += 0.5) {
                     for (let dx = -2.0; dx <= 2.0; dx += 0.5) {
                         let darknesses = [];
                         for (let opt = 0; opt < 4; opt++) {
-                            const mmP = { x: nominalCx + opt * 5.2 + dx, y: nominalCy + dy };
+                            const bubbleCx = gridStartX + 8.0 + (opt * 4.6);
+                            const mmP = { x: bubbleCx + dx, y: bubbleCy + dy };
                             const camP = Utils.math.applyHomography(mmP, homography);
                             darknesses.push(getDarkness(camP.x, camP.y));
                         }
@@ -421,6 +483,7 @@ const Scanner = {
             }
         } catch (e) {
             console.warn('Bubble detection error:', e);
+            return null;
         }
 
         return detected;
