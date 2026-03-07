@@ -156,6 +156,9 @@
             border-radius: 8px;
             animation: slideInRight 0.3s ease;
             border-left: 3px solid transparent;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 400px;
         }
 
         .scanned-item.a {
@@ -222,6 +225,66 @@
             opacity: 0.3;
             transition: opacity 0.05s;
         }
+
+        /* Floating Scan Toasts */
+        .toast-container-cam {
+            position: absolute;
+            top: 60px;
+            /* Below the top dark bar */
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 30;
+            pointer-events: none;
+            width: 90%;
+            align-items: center;
+        }
+
+        .cam-toast {
+            background: rgba(16, 185, 129, 0.95);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), fadeOut 0.5s ease 1s forwards;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cam-toast span {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+        }
     </style>
 </head>
 
@@ -245,6 +308,7 @@
             <video id="video" playsinline></video>
             <canvas id="overlayCanvas"></canvas>
             <div id="scanFlash" class="scan-flash"></div>
+            <div class="toast-container-cam" id="camToasts"></div>
             <div class="camera-instruction" id="cameraInstr">
                 Esperando a que el profesor inicie la pregunta...
             </div>
@@ -524,6 +588,7 @@
 
                     // Visual feedback
                     flashScreen();
+                    showCamToast(studentsMap[studentId] || 'Alumno', answer);
                     renderList();
 
                     // Sync to Firebase cleanly (Batched)
@@ -562,6 +627,7 @@
                         localResponses[studentId] = { answer, timestamp: now };
                         recentScans.set(studentId, { time: now, ans: answer });
                         flashScreen();
+                        showCamToast(studentsMap[studentId] || 'Alumno', answer);
                         renderList();
 
                         queueNetworkUpdate(studentId, answer, now);
@@ -587,10 +653,30 @@
             overlayCtx.strokeStyle = "#10B981";
             overlayCtx.stroke();
 
-            // Draw label
+            // Draw label near the center rather than top left, and slightly bigger
+            const cx = (loc.topLeftCorner.x + loc.bottomRightCorner.x) / 2 * ratioX;
+            const cy = (loc.topLeftCorner.y + loc.bottomRightCorner.y) / 2 * ratioY;
+
             overlayCtx.fillStyle = "#10B981";
-            overlayCtx.font = "bold 24px sans-serif";
-            overlayCtx.fillText(label, loc.topLeftCorner.x * ratioX, loc.topLeftCorner.y * ratioY - 10);
+            overlayCtx.font = "bold 28px sans-serif";
+            overlayCtx.textAlign = 'center';
+            overlayCtx.fillText(label, cx, loc.topLeftCorner.y * ratioY - 10);
+        }
+
+        function showCamToast(name, answer) {
+            const container = document.getElementById('camToasts');
+            const toast = document.createElement('div');
+            toast.className = 'cam-toast';
+            toast.innerHTML = `✅ ${name} <span>${answer}</span>`;
+
+            container.appendChild(toast);
+
+            // Auto remove after 1.5s (animation handles fading before this)
+            setTimeout(() => {
+                if (toast.parentNode === container) {
+                    container.removeChild(toast);
+                }
+            }, 1500);
         }
 
         function flashScreen() {
