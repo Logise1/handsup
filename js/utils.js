@@ -1,322 +1,381 @@
-// ============================================
-// HandsUp — Utility Functions
-// ============================================
+// Utility functions for HandsUp
 
-const Utils = {
-    // Generate unique ID
-    generateId() {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-    },
+// Toast notification system
+export function showToast(message, type = 'info') {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
 
-    // Format date
-    formatDate(date) {
-        if (!date) return '';
-        const d = date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date);
-        return d.toLocaleDateString('es-ES', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    },
+    const icons = {
+        info: '💡',
+        success: '✅',
+        error: '❌',
+        warning: '⚠️'
+    };
 
-    // Format time
-    formatTime(date) {
-        if (!date) return '';
-        const d = date instanceof Date ? date : date.toDate ? date.toDate() : new Date(date);
-        return d.toLocaleTimeString('es-ES', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    },
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span>${icons[type] || '💡'}</span><span>${message}</span>`;
+    container.appendChild(toast);
 
-    // Calculate grade (0-10, rounded to 2 decimals)
-    calculateGrade(correct, total) {
-        if (total === 0) return 0;
-        return Math.round((correct / total) * 10 * 100) / 100;
-    },
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}
 
-    // Get grade color class
-    getGradeColor(grade) {
-        if (grade >= 9) return 'grade-excellent';
-        if (grade >= 7) return 'grade-good';
-        if (grade >= 5) return 'grade-pass';
-        return 'grade-fail';
-    },
+// Format date
+export function formatDate(timestamp) {
+    if (!timestamp) return '';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('es-ES', {
+        day: 'numeric', month: 'short', year: 'numeric'
+    });
+}
 
-    // Get grade badge class
-    getGradeBadge(grade) {
-        if (grade >= 5) return 'badge-success';
-        return 'badge-danger';
-    },
+// Generate unique ID
+export function generateId(length = 8) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
 
-    // Show toast notification
-    showToast(message, type = 'info') {
-        const container = document.querySelector('.toast-container') || (() => {
-            const c = document.createElement('div');
-            c.className = 'toast-container';
-            document.body.appendChild(c);
-            return c;
-        })();
+// Generate a game PIN (6 digits)
+export function generateGamePin() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
-        const icons = {
-            success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
-            error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-            info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
-        };
+// Escape HTML
+export function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.innerHTML = `
-      <span class="toast-icon">${icons[type] || icons.info}</span>
-      <span class="toast-message">${message}</span>
-    `;
+// Debounce
+export function debounce(fn, delay) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+    };
+}
 
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add('removing');
-            setTimeout(() => toast.remove(), 300);
-        }, 3500);
-    },
-
-    // Show/hide loading overlay
-    showLoading(message = 'Cargando...') {
-        let overlay = document.getElementById('loading-overlay');
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.id = 'loading-overlay';
-            overlay.className = 'loading-overlay';
-            overlay.innerHTML = `
-        <div class="spinner spinner-lg"></div>
-        <p id="loading-message">${message}</p>
-      `;
-            document.body.appendChild(overlay);
-        } else {
-            document.getElementById('loading-message').textContent = message;
-            overlay.style.display = 'flex';
-        }
-    },
-
-    hideLoading() {
-        const overlay = document.getElementById('loading-overlay');
-        if (overlay) overlay.style.display = 'none';
-    },
-
-    // Open modal
-    openModal(id) {
-        document.getElementById(id)?.classList.add('active');
-        document.getElementById(id + '-backdrop')?.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    },
-
-    // Close modal
-    closeModal(id) {
-        document.getElementById(id)?.classList.remove('active');
-        document.getElementById(id + '-backdrop')?.classList.remove('active');
-        document.body.style.overflow = '';
-    },
-
-    // Confirm dialog using modal
-    async confirm(title, message) {
-        return new Promise((resolve) => {
-            let backdrop = document.getElementById('confirm-backdrop');
-            let modal = document.getElementById('confirm-modal');
-
-            if (!backdrop) {
-                backdrop = document.createElement('div');
-                backdrop.id = 'confirm-backdrop';
-                backdrop.className = 'modal-backdrop';
-                document.body.appendChild(backdrop);
-
-                modal = document.createElement('div');
-                modal.id = 'confirm-modal';
-                modal.className = 'modal';
-                modal.innerHTML = `
-          <div class="modal-header">
-            <h3 id="confirm-title"></h3>
-          </div>
-          <p id="confirm-message" class="text-secondary"></p>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" id="confirm-cancel">Cancelar</button>
-            <button class="btn btn-primary" id="confirm-ok">Confirmar</button>
-          </div>
-        `;
-                document.body.appendChild(modal);
-            }
-
-            document.getElementById('confirm-title').textContent = title;
-            document.getElementById('confirm-message').textContent = message;
-
-            Utils.openModal('confirm-modal');
-
-            const cancel = document.getElementById('confirm-cancel');
-            const ok = document.getElementById('confirm-ok');
-
-            const cleanup = () => {
-                Utils.closeModal('confirm-modal');
-                cancel.removeEventListener('click', onCancel);
-                ok.removeEventListener('click', onOk);
-            };
-
-            const onCancel = () => { cleanup(); resolve(false); };
-            const onOk = () => { cleanup(); resolve(true); };
-
-            cancel.addEventListener('click', onCancel);
-            ok.addEventListener('click', onOk);
-        });
-    },
-
-    // Debounce function
-    debounce(fn, delay = 300) {
-        let timer;
-        return (...args) => {
-            clearTimeout(timer);
-            timer = setTimeout(() => fn(...args), delay);
-        };
-    },
-
-    // Render inline Markdown to HTML (for exam text)
-    // Supports: **bold**, *italic*, `code`, ~~strikethrough~~, ^super^, ~sub~
-    renderMarkdown(text) {
-        if (!text) return '';
-        let html = this.escapeHtml(text);
-        // Code blocks (inline)
-        html = html.replace(/`([^`]+)`/g, '<code style="background:#F1F5F9;padding:1px 4px;border-radius:3px;font-size:0.9em;font-family:monospace;">$1</code>');
-        // Bold
-        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        // Italic
-        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-        // Underline
-        html = html.replace(/__(.+?)__/g, '<u>$1</u>');
-        // Strikethrough
-        html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
-        // Superscript x^2^
-        html = html.replace(/\^(.+?)\^/g, '<sup>$1</sup>');
-        // Subscript H~2~O
-        html = html.replace(/~(.+?)~/g, '<sub>$1</sub>');
-        // Line breaks
-        html = html.replace(/\n/g, '<br>');
-        return html;
-    },
-
-    // Escape HTML
-    escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    },
-
-    // Check auth and redirect
-    requireAuth() {
-        return new Promise((resolve) => {
-            auth.onAuthStateChanged(user => {
-                if (!user) {
-                    window.location.href = 'index.html';
-                    return;
-                }
+// Require auth - redirect to login if not authenticated
+export function requireAuth(auth, onAuthStateChanged) {
+    return new Promise((resolve) => {
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
                 resolve(user);
-            });
-        });
-    },
-
-    // Animate elements on scroll
-    initScrollAnimations() {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('animate-visible');
-                        observer.unobserve(entry.target);
-                    }
-                });
-            },
-            { threshold: 0.1 }
-        );
-
-        document.querySelectorAll('.animate-on-scroll').forEach(el => {
-            observer.observe(el);
-        });
-    },
-
-    // Init 3D card tilt effect
-    init3DCards() {
-        document.querySelectorAll('.card-3d').forEach(card => {
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                const rotateX = (y - centerY) / centerY * -8;
-                const rotateY = (x - centerX) / centerX * 8;
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-            });
-
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
-            });
-        });
-    },
-
-    // ── OMR (Optical Mark Recognition) Math utilities ──
-    math: {
-        getHomography(src, dst) {
-            let A = [];
-            for (let i = 0; i < 4; i++) {
-                let x = src[i].x, y = src[i].y;
-                let u = dst[i].x, v = dst[i].y;
-                A.push([x, y, 1, 0, 0, 0, -u * x, -u * y, u]);
-                A.push([0, 0, 0, x, y, 1, -v * x, -v * y, v]);
             }
+        });
+    });
+}
 
-            let M = [], B = [];
-            for (let i = 0; i < 8; i++) {
-                M.push(A[i].slice(0, 8));
-                B.push(-A[i][8]);
-            }
+// Mistral AI API call
+const MISTRAL_API_KEY = 'evxly62Xv91b752fbnHA2I3HD988C5RT';
 
-            let h = this.gaussJordan(M, B);
-            if (!h) return null;
-            h.push(1);
-            return h;
+export async function callMistralAI(prompt) {
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${MISTRAL_API_KEY}`
         },
-
-        gaussJordan(A, b) {
-            let n = A.length;
-            let M = [];
-            for (let i = 0; i < n; i++) M.push([...A[i], b[i]]);
-
-            for (let i = 0; i < n; i++) {
-                let maxRow = i;
-                for (let j = i + 1; j < n; j++) {
-                    if (Math.abs(M[j][i]) > Math.abs(M[maxRow][i])) maxRow = j;
+        body: JSON.stringify({
+            model: 'mistral-large-latest',
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a quiz generator for educational purposes. Always respond with valid JSON only, no markdown formatting, no code blocks. Just pure JSON.'
+                },
+                {
+                    role: 'user',
+                    content: prompt
                 }
-                let temp = M[i];
-                M[i] = M[maxRow];
-                M[maxRow] = temp;
+            ],
+            temperature: 0.7,
+            max_tokens: 4000
+        })
+    });
 
-                let div = M[i][i];
-                if (Math.abs(div) < 1e-10) return null;
+    if (!response.ok) {
+        throw new Error('Error calling Mistral AI: ' + response.statusText);
+    }
 
-                for (let j = i; j <= n; j++) M[i][j] /= div;
-                for (let j = 0; j < n; j++) {
-                    if (i !== j) {
-                        let factor = M[j][i];
-                        for (let k = i; k <= n; k++) M[j][k] -= factor * M[i][k];
-                    }
-                }
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    // Try to extract JSON from the response
+    let jsonStr = content.trim();
+    // Remove markdown code blocks if present
+    if (jsonStr.startsWith('```')) {
+        jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+    }
+
+    return JSON.parse(jsonStr);
+}
+
+// 5x5 Plickers-style code generation
+// Each code encodes a student number (0-63)
+// The code has orientation markers so when rotated, we can detect A/B/C/D
+export function generateHandsUpCode(studentNumber) {
+    // The 5x5 grid:
+    // - Corner cells (0,0), (0,4), (4,0), (4,4) are orientation markers
+    // - The remaining 21 cells encode the student number and orientation detection
+
+    // Orientation markers: exactly one corner is filled to detect rotation
+    // Corner (0,0) = filled, others = empty → this is "up" position (Answer A)
+    // When rotated 90° CW: Corner (0,4) appears at top-left → Answer B
+    // When rotated 180°: Corner (4,4) appears at top-left → Answer C
+    // When rotated 270° CW: Corner (4,0) appears at top-left → Answer D
+
+    const grid = Array(5).fill(null).map(() => Array(5).fill(0));
+
+    // Set the orientation marker at top-left corner (for answer A position)
+    grid[0][0] = 1;
+
+    // Additional orientation: make the pattern asymmetric
+    // Use edge midpoints as secondary orientation
+    grid[0][2] = 1; // Top edge middle - helps confirm orientation
+
+    // Encode student number (0-63 = 6 bits) in the inner cells
+    // Inner cells we'll use (avoiding corners and orientation markers):
+    const dataCells = [
+        [1, 1], [1, 2], [1, 3],
+        [2, 1], [2, 3],
+        [3, 1], [3, 2], [3, 3]
+    ];
+
+    // Use first 6 data cells for the student number
+    const bits = studentNumber.toString(2).padStart(6, '0');
+    for (let i = 0; i < 6; i++) {
+        const [r, c] = dataCells[i];
+        grid[r][c] = parseInt(bits[i]);
+    }
+
+    // Add some pattern cells for visual distinction
+    // Use remaining data cells with a checksum-like pattern
+    const checksum = (studentNumber * 7 + 3) % 4;
+    const checksumBits = checksum.toString(2).padStart(2, '0');
+    for (let i = 6; i < 8; i++) {
+        const [r, c] = dataCells[i];
+        grid[r][c] = parseInt(checksumBits[i - 6]);
+    }
+
+    // Fill some border cells based on student number for visual variety
+    grid[2][0] = (studentNumber >> 1) & 1;
+    grid[0][1] = (studentNumber >> 2) & 1;
+    grid[0][3] = (studentNumber >> 3) & 1;
+    grid[4][1] = (studentNumber >> 4) & 1;
+    grid[4][2] = (studentNumber >> 5) & 1;
+    grid[4][3] = studentNumber & 1;
+    grid[1][0] = (studentNumber >> 3) & 1;
+    grid[3][0] = studentNumber & 1;
+    grid[1][4] = (studentNumber >> 2) & 1;
+    grid[3][4] = (studentNumber >> 1) & 1;
+    grid[2][4] = (studentNumber >> 4) & 1;
+
+    // Always keep (4,0) and (0,4) and (4,4) empty as orientation reference
+    grid[0][4] = 0;
+    grid[4][0] = 0;
+    grid[4][4] = 0;
+
+    // Center cell pattern
+    grid[2][2] = 1;
+
+    return grid;
+}
+
+// Draw a HandsUp code onto a canvas
+export function drawHandsUpCode(canvas, grid, label, size = 200) {
+    canvas.width = size;
+    canvas.height = size + 36;
+    const ctx = canvas.getContext('2d');
+
+    const cellSize = Math.floor(size / 7); // Add padding around the grid
+    const offset = Math.floor((size - cellSize * 5) / 2);
+
+    // White background
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, size, size + 36);
+
+    // Draw outer border
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(offset - 4, offset - 4, cellSize * 5 + 8, cellSize * 5 + 8);
+
+    // Draw grid cells
+    for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+            const x = offset + c * cellSize;
+            const y = offset + r * cellSize;
+
+            if (grid[r][c] === 1) {
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(x, y, cellSize, cellSize);
+            } else {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(x, y, cellSize, cellSize);
+                ctx.strokeStyle = '#E0E0E0';
+                ctx.lineWidth = 0.5;
+                ctx.strokeRect(x, y, cellSize, cellSize);
             }
-            let x = [];
-            for (let i = 0; i < n; i++) x.push(M[i][n]);
-            return x;
-        },
-
-        applyHomography(p, h) {
-            let w = h[6] * p.x + h[7] * p.y + h[8];
-            return {
-                x: (h[0] * p.x + h[1] * p.y + h[2]) / w,
-                y: (h[3] * p.x + h[4] * p.y + h[5]) / w
-            };
         }
     }
+
+    // Draw answer labels on each side
+    ctx.fillStyle = '#666';
+    ctx.font = `bold ${Math.max(10, cellSize * 0.5)}px Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // A = top
+    ctx.fillStyle = '#E74C3C';
+    ctx.fillText('A', size / 2, offset - 14);
+
+    // B = right
+    ctx.fillStyle = '#3498DB';
+    ctx.save();
+    ctx.translate(offset + cellSize * 5 + 14, size / 2);
+    ctx.fillText('B', 0, 0);
+    ctx.restore();
+
+    // C = bottom
+    ctx.fillStyle = '#F1C40F';
+    ctx.fillText('C', size / 2, offset + cellSize * 5 + 14);
+
+    // D = left
+    ctx.fillStyle = '#2ECC71';
+    ctx.fillText('D', offset - 14, size / 2);
+
+    // Draw label at bottom
+    ctx.fillStyle = '#333';
+    ctx.font = `bold ${Math.max(11, size * 0.065)}px Inter, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(label, size / 2, size + 22);
+}
+
+// Rotate a 5x5 grid 90° clockwise
+export function rotateGrid90(grid) {
+    const n = grid.length;
+    const rotated = Array(n).fill(null).map(() => Array(n).fill(0));
+    for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+            rotated[c][n - 1 - r] = grid[r][c];
+        }
+    }
+    return rotated;
+}
+
+// Detect which answer (A/B/C/D) based on the orientation of a scanned code
+export function detectAnswer(grid) {
+    // Check which corner has the orientation marker (filled cell)
+    // A = top-left (0,0), B = top-right (0,4), C = bottom-right (4,4), D = bottom-left (4,0)
+    if (grid[0][0] === 1 && grid[0][4] === 0 && grid[4][4] === 0 && grid[4][0] === 0) return 'A';
+    if (grid[0][0] === 0 && grid[0][4] === 1 && grid[4][4] === 0 && grid[4][0] === 0) return 'B';
+    if (grid[0][0] === 0 && grid[0][4] === 0 && grid[4][4] === 1 && grid[4][0] === 0) return 'C';
+    if (grid[0][0] === 0 && grid[0][4] === 0 && grid[4][4] === 0 && grid[4][0] === 1) return 'D';
+    return null; // Unknown orientation
+}
+
+// Decode student number from grid (assuming grid is in canonical orientation - answer A)
+export function decodeStudentNumber(grid) {
+    // First normalize to answer A orientation
+    let normalized = grid;
+    const answer = detectAnswer(grid);
+    if (answer === 'B') {
+        // Rotate 270° (or 3 times 90° CW)
+        normalized = rotateGrid90(rotateGrid90(rotateGrid90(grid)));
+    } else if (answer === 'C') {
+        normalized = rotateGrid90(rotateGrid90(grid));
+    } else if (answer === 'D') {
+        normalized = rotateGrid90(grid);
+    }
+
+    const dataCells = [
+        [1, 1], [1, 2], [1, 3],
+        [2, 1], [2, 3],
+        [3, 1]
+    ];
+
+    let bits = '';
+    for (const [r, c] of dataCells) {
+        bits += normalized[r][c];
+    }
+
+    return parseInt(bits, 2);
+}
+
+// SVG icons as strings
+export const icons = {
+    hand: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 13"/></svg>`,
+
+    users: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+
+    quiz: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="M9.5 15.5 12 18l2.5-2.5"/></svg>`,
+
+    play: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
+
+    plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+
+    grid: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
+
+    scan: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10"/></svg>`,
+
+    trophy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`,
+
+    ai: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/><path d="M9 18h6"/></svg>`,
+
+    logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+
+    settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+
+    printer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>`,
+
+    trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+
+    edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+
+    check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+
+    clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+
+    home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+
+    chart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+
+    camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>`,
+
+    zap: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+
+    star: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
 };
+
+// Navbar HTML generator
+export function getNavbarHTML(activePage = '') {
+    return `
+    <nav class="navbar">
+      <div class="navbar-inner">
+        <a href="dashboard.html" class="navbar-brand">
+          ${icons.hand}
+          <span>Hands<span class="text-gradient">Up</span></span>
+        </a>
+        <div class="navbar-links">
+          <a href="dashboard.html" class="navbar-link ${activePage === 'dashboard' ? 'active' : ''}">Dashboard</a>
+          <a href="my-classes.html" class="navbar-link ${activePage === 'classes' ? 'active' : ''}">Mis Clases</a>
+          <a href="my-quizzes.html" class="navbar-link ${activePage === 'quizzes' ? 'active' : ''}">Mis Quizzes</a>
+          <button onclick="window.handleLogout()" class="btn btn-ghost btn-sm" id="logoutBtn">${icons.logout} Salir</button>
+        </div>
+      </div>
+    </nav>
+  `;
+}
