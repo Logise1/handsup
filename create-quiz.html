@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HandsUp — Crear Quiz</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/quiz.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✋</text></svg>">
+</head>
+
+<body>
+    <div id="navContainer"></div>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Principal</div>
+                <a href="dashboard.html" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="my-classes.html" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                    </svg>
+                    Mis Clases
+                </a>
+                <a href="my-quizzes.html" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                        <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    Mis Quizzes
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content" style="padding-bottom:100px">
+            <div class="quiz-creator">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Crear Quiz</h1>
+                        <p class="page-subtitle">Genera preguntas con IA o créalas manualmente</p>
+                    </div>
+                </div>
+
+                <!-- Quiz Title & Settings -->
+                <div class="card" style="margin-bottom:24px">
+                    <div class="form-group">
+                        <label class="form-label">Título del quiz</label>
+                        <input type="text" class="form-input" id="quizTitle" placeholder="Ej: Capitales de Europa">
+                    </div>
+                    <div class="ai-form-row">
+                        <div class="form-group">
+                            <label class="form-label">Tiempo por pregunta (segundos)</label>
+                            <input type="number" class="form-input" id="quizTime" value="20" min="5" max="120">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Puntos por respuesta correcta</label>
+                            <input type="number" class="form-input" id="quizPoints" value="1000" min="100" max="5000"
+                                step="100">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Generation -->
+                <div class="ai-box" id="aiBox">
+                    <div class="ai-box-header">
+                        <div class="ai-box-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z" />
+                                <circle cx="9" cy="14" r="1" />
+                                <circle cx="15" cy="14" r="1" />
+                                <path d="M9 18h6" />
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="ai-box-title">Generar con IA</div>
+                            <div class="ai-box-subtitle">Powered by Mistral AI</div>
+                        </div>
+                    </div>
+
+                    <div id="aiFormContent">
+                        <div class="form-group">
+                            <label class="form-label">Tema o asignatura</label>
+                            <input type="text" class="form-input" id="aiTopic"
+                                placeholder="Ej: Historia de España - Siglo XIX">
+                        </div>
+                        <div class="ai-form-row">
+                            <div class="form-group">
+                                <label class="form-label">Número de preguntas</label>
+                                <select class="form-input form-select" id="aiCount">
+                                    <option value="5">5 preguntas</option>
+                                    <option value="10" selected>10 preguntas</option>
+                                    <option value="15">15 preguntas</option>
+                                    <option value="20">20 preguntas</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nivel de dificultad</label>
+                                <select class="form-input form-select" id="aiDifficulty">
+                                    <option value="fácil">Fácil</option>
+                                    <option value="medio" selected>Medio</option>
+                                    <option value="difícil">Difícil</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Idioma</label>
+                            <select class="form-input form-select" id="aiLanguage">
+                                <option value="español" selected>Español</option>
+                                <option value="inglés">Inglés</option>
+                                <option value="francés">Francés</option>
+                                <option value="catalán">Catalán</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-lg" style="width:100%" onclick="generateWithAI()"
+                            id="generateBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20"
+                                height="20">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                            </svg>
+                            Generar con IA
+                        </button>
+                    </div>
+
+                    <div id="aiLoadingContent" style="display:none">
+                        <div class="ai-generating">
+                            <div class="spinner spinner-lg" style="margin:0 auto"></div>
+                            <div class="ai-generating-text">Generando preguntas con IA...</div>
+                            <div class="ai-generating-sub">Esto puede tardar unos segundos</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Questions List -->
+                <div class="dashboard-section">
+                    <div class="dashboard-section-header">
+                        <h3 class="dashboard-section-title">Preguntas (<span id="questionCount">0</span>)</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="addEmptyQuestion()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"
+                                height="16">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Añadir pregunta
+                        </button>
+                    </div>
+                    <div class="question-list" id="questionList">
+                        <div class="empty-state" id="emptyQuestions">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="60"
+                                height="60">
+                                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                                <polyline points="14 2 14 8 20 8" />
+                            </svg>
+                            <h3>Sin preguntas</h3>
+                            <p>Genera preguntas con IA o añádelas manualmente</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Bar -->
+            <div class="save-bar" id="saveBar" style="display:none">
+                <div class="save-bar-info">
+                    <span id="saveBarInfo">0 preguntas</span>
+                </div>
+                <div class="save-bar-actions">
+                    <button class="btn btn-secondary" onclick="window.location.href='my-quizzes.html'">Cancelar</button>
+                    <button class="btn btn-primary" onclick="saveQuiz()" id="saveQuizBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18"
+                            height="18">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Guardar Quiz
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth, db, onAuthStateChanged, signOut, doc, getDoc, setDoc, addDoc, updateDoc, collection, serverTimestamp } from './js/firebase-init.js';
+        import { getNavbarHTML, showToast, callMistralAI, icons } from './js/utils.js';
+
+        document.getElementById('navContainer').innerHTML = getNavbarHTML('quizzes');
+
+        window.handleLogout = async () => {
+            await signOut(auth);
+            window.location.href = 'login.html';
+        };
+
+        let currentUser = null;
+        let questions = [];
+        let editQuizId = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) return window.location.href = 'login.html';
+            currentUser = user;
+
+            // Check if editing existing quiz
+            const params = new URLSearchParams(window.location.search);
+            editQuizId = params.get('edit');
+            if (editQuizId) {
+                await loadExistingQuiz(editQuizId);
+            }
+        });
+
+        async function loadExistingQuiz(quizId) {
+            const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
+            if (!quizDoc.exists()) return showToast('Quiz no encontrado', 'error');
+
+            const data = quizDoc.data();
+            document.getElementById('quizTitle').value = data.title || '';
+            document.getElementById('quizTime').value = data.timePerQuestion || 20;
+            document.getElementById('quizPoints').value = data.pointsPerQuestion || 1000;
+
+            questions = data.questions || [];
+            renderQuestions();
+        }
+
+        // Generate with AI
+        window.generateWithAI = async () => {
+            const topic = document.getElementById('aiTopic').value.trim();
+            if (!topic) return showToast('Escribe un tema para generar preguntas', 'warning');
+
+            const count = document.getElementById('aiCount').value;
+            const difficulty = document.getElementById('aiDifficulty').value;
+            const language = document.getElementById('aiLanguage').value;
+
+            document.getElementById('aiFormContent').style.display = 'none';
+            document.getElementById('aiLoadingContent').style.display = 'block';
+
+            const prompt = `Generate a quiz with exactly ${count} multiple choice questions about "${topic}" at "${difficulty}" difficulty level. Each question must have exactly 4 options (A, B, C, D) with only one correct answer. Write everything in ${language}.
+
+Return a JSON object with this exact structure:
+{
+  "title": "Quiz title here",
+  "questions": [
+    {
+      "question": "Question text here?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctIndex": 0
+    }
+  ]
+}
+
+correctIndex is 0 for A, 1 for B, 2 for C, 3 for D. Make questions interesting and educational. Ensure all options are plausible.`;
+
+            try {
+                const result = await callMistralAI(prompt);
+
+                if (result.title && !document.getElementById('quizTitle').value) {
+                    document.getElementById('quizTitle').value = result.title;
+                }
+
+                if (result.questions && Array.isArray(result.questions)) {
+                    questions = result.questions.map(q => ({
+                        question: q.question,
+                        options: q.options,
+                        correctIndex: q.correctIndex
+                    }));
+                    renderQuestions();
+                    showToast(`${questions.length} preguntas generadas con IA`, 'success');
+                } else {
+                    throw new Error('El formato de respuesta no es válido');
+                }
+            } catch (err) {
+                console.error('AI Error:', err);
+                showToast('Error al generar con IA: ' + err.message, 'error');
+            }
+
+            document.getElementById('aiFormContent').style.display = 'block';
+            document.getElementById('aiLoadingContent').style.display = 'none';
+        };
+
+        // Render questions
+        function renderQuestions() {
+            const list = document.getElementById('questionList');
+            const empty = document.getElementById('emptyQuestions');
+
+            document.getElementById('questionCount').textContent = questions.length;
+            document.getElementById('saveBarInfo').textContent = `${questions.length} preguntas`;
+
+            if (questions.length === 0) {
+                empty.style.display = 'block';
+                list.innerHTML = '';
+                list.appendChild(empty);
+                document.getElementById('saveBar').style.display = 'none';
+                return;
+            }
+
+            empty.style.display = 'none';
+            document.getElementById('saveBar').style.display = 'flex';
+
+            list.innerHTML = questions.map((q, qi) => {
+                const labels = ['A', 'B', 'C', 'D'];
+                const classes = ['a', 'b', 'c', 'd'];
+
+                return `
+          <div class="question-card">
+            <div class="question-number">${qi + 1}</div>
+            <button class="question-delete" onclick="deleteQuestion(${qi})">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+            <input type="text" class="question-text-input" value="${q.question.replace(/"/g, '&quot;')}" 
+                   onchange="updateQuestion(${qi}, 'question', this.value)" placeholder="Escribe la pregunta...">
+            <div class="question-answers">
+              ${q.options.map((opt, oi) => `
+                <div class="question-answer ${q.correctIndex === oi ? 'correct' : ''}" onclick="setCorrect(${qi}, ${oi})">
+                  <div class="question-answer-marker ${classes[oi]}">${labels[oi]}</div>
+                  <input type="text" class="question-answer-input" value="${opt.replace(/"/g, '&quot;')}"
+                         onchange="updateOption(${qi}, ${oi}, this.value)" onclick="event.stopPropagation()" placeholder="Opción ${labels[oi]}">
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+            }).join('');
+        }
+
+        // Update question text
+        window.updateQuestion = (qi, field, value) => {
+            questions[qi][field] = value;
+        };
+
+        // Update option text
+        window.updateOption = (qi, oi, value) => {
+            questions[qi].options[oi] = value;
+        };
+
+        // Set correct answer
+        window.setCorrect = (qi, oi) => {
+            questions[qi].correctIndex = oi;
+            renderQuestions();
+        };
+
+        // Delete question
+        window.deleteQuestion = (qi) => {
+            questions.splice(qi, 1);
+            renderQuestions();
+        };
+
+        // Add empty question
+        window.addEmptyQuestion = () => {
+            questions.push({
+                question: '',
+                options: ['', '', '', ''],
+                correctIndex: 0
+            });
+            renderQuestions();
+            // Scroll to bottom
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        };
+
+        // Save quiz
+        window.saveQuiz = async () => {
+            const title = document.getElementById('quizTitle').value.trim();
+            if (!title) return showToast('Pon un título al quiz', 'warning');
+            if (questions.length === 0) return showToast('Añade al menos una pregunta', 'warning');
+
+            // Validate all questions have text and options
+            for (let i = 0; i < questions.length; i++) {
+                if (!questions[i].question.trim()) {
+                    return showToast(`La pregunta ${i + 1} está vacía`, 'warning');
+                }
+                for (let j = 0; j < 4; j++) {
+                    if (!questions[i].options[j].trim()) {
+                        return showToast(`La pregunta ${i + 1} tiene opciones vacías`, 'warning');
+                    }
+                }
+            }
+
+            const btn = document.getElementById('saveQuizBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px"></div> Guardando...';
+
+            const quizData = {
+                title,
+                questions,
+                timePerQuestion: parseInt(document.getElementById('quizTime').value) || 20,
+                pointsPerQuestion: parseInt(document.getElementById('quizPoints').value) || 1000,
+                teacherId: currentUser.uid,
+                updatedAt: serverTimestamp()
+            };
+
+            try {
+                if (editQuizId) {
+                    await updateDoc(doc(db, 'quizzes', editQuizId), quizData);
+                    showToast('Quiz actualizado', 'success');
+                } else {
+                    quizData.createdAt = serverTimestamp();
+                    await addDoc(collection(db, 'quizzes'), quizData);
+                    showToast('Quiz guardado', 'success');
+                }
+
+                setTimeout(() => {
+                    window.location.href = 'my-quizzes.html';
+                }, 800);
+            } catch (err) {
+                showToast('Error al guardar: ' + err.message, 'error');
+                console.error(err);
+                btn.disabled = false;
+                btn.innerHTML = `${icons.check} Guardar Quiz`;
+            }
+        };
+    </script>
+</body>
+
+</html>

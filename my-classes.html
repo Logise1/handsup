@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HandsUp — Mis Clases</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✋</text></svg>">
+</head>
+
+<body>
+    <div id="navContainer"></div>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Principal</div>
+                <a href="dashboard.html" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="my-classes.html" class="sidebar-link active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    Mis Clases
+                </a>
+                <a href="my-quizzes.html" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                        <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    Mis Quizzes
+                </a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Acciones</div>
+                <a href="create-quiz.html" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <path
+                            d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z" />
+                        <circle cx="9" cy="14" r="1" />
+                        <circle cx="15" cy="14" r="1" />
+                        <path d="M9 18h6" />
+                    </svg>
+                    Crear Quiz con IA
+                </a>
+                <a href="print-codes.html" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <polyline points="6 9 6 2 18 2 18 9" />
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                        <rect x="6" y="14" width="12" height="8" />
+                    </svg>
+                    Imprimir Códigos
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- Classes List View -->
+            <div id="classesListView">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Mis Clases</h1>
+                        <p class="page-subtitle">Gestiona tus clases y alumnos</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showCreateClassModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18"
+                            height="18">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Nueva Clase
+                    </button>
+                </div>
+
+                <div class="cards-grid stagger" id="classesGrid">
+                    <!-- Classes will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Class Detail View (hidden by default) -->
+            <div id="classDetailView" style="display:none">
+                <div class="page-header">
+                    <div>
+                        <button class="btn btn-ghost btn-sm" onclick="showClassesList()" style="margin-bottom:8px">←
+                            Volver a clases</button>
+                        <h1 class="page-title" id="classDetailName">Clase</h1>
+                        <p class="page-subtitle" id="classDetailInfo"></p>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <a id="printCodesLink" href="#" class="btn btn-secondary">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18"
+                                height="18">
+                                <polyline points="6 9 6 2 18 2 18 9" />
+                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                <rect x="6" y="14" width="12" height="8" />
+                            </svg>
+                            Imprimir Códigos
+                        </a>
+                        <button class="btn btn-primary" onclick="showAddStudentModal()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18"
+                                height="18">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Añadir Alumno
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card" style="padding:0;overflow:hidden">
+                    <ul class="student-list" id="studentList">
+                        <!-- Students will be loaded here -->
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Class Modal -->
+    <div class="modal-overlay" id="createClassModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Nueva Clase</h3>
+                <button class="modal-close" onclick="closeModal('createClassModal')">✕</button>
+            </div>
+            <form onsubmit="handleCreateClass(event)">
+                <div class="form-group">
+                    <label class="form-label">Nombre de la clase</label>
+                    <input type="text" class="form-input" id="className" placeholder="Ej: 4º ESO - Matemáticas"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción (opcional)</label>
+                    <input type="text" class="form-input" id="classDesc" placeholder="Ej: Clase de mates del IES...">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%" id="createClassBtn">Crear
+                    Clase</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div class="modal-overlay" id="addStudentModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Añadir Alumno</h3>
+                <button class="modal-close" onclick="closeModal('addStudentModal')">✕</button>
+            </div>
+            <form onsubmit="handleAddStudent(event)">
+                <div class="form-group">
+                    <label class="form-label">Nombre del alumno</label>
+                    <input type="text" class="form-input" id="studentName" placeholder="Nombre completo" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%" id="addStudentBtn">Añadir</button>
+            </form>
+            <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--gray-200)">
+                <label class="form-label">O añadir varios (uno por línea)</label>
+                <textarea class="form-input form-textarea" id="bulkStudents"
+                    placeholder="Juan García&#10;María López&#10;Pedro Sánchez" rows="5"></textarea>
+                <button class="btn btn-secondary" style="width:100%;margin-top:8px" onclick="handleBulkAdd()">Añadir
+                    todos</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, db, onAuthStateChanged, signOut, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, addDoc, query, where, serverTimestamp, arrayUnion } from './js/firebase-init.js';
+        import { getNavbarHTML, showToast, icons, generateId } from './js/utils.js';
+
+        document.getElementById('navContainer').innerHTML = getNavbarHTML('classes');
+
+        window.handleLogout = async () => {
+            await signOut(auth);
+            window.location.href = 'login.html';
+        };
+
+        let currentUser = null;
+        let currentClassId = null;
+        let classes = [];
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) return window.location.href = 'login.html';
+            currentUser = user;
+            await loadClasses();
+
+            // Check URL hash for auto-opening new class modal
+            if (window.location.hash === '#new') {
+                showCreateClassModal();
+            }
+        });
+
+        async function loadClasses() {
+            const snap = await getDocs(query(collection(db, 'classes'), where('teacherId', '==', currentUser.uid)));
+            classes = [];
+            snap.forEach(d => classes.push({ id: d.id, ...d.data() }));
+            classes.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            renderClasses();
+        }
+
+        function renderClasses() {
+            const grid = document.getElementById('classesGrid');
+
+            if (classes.length === 0) {
+                grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="60" height="60"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <h3>No tienes clases</h3>
+            <p>Crea tu primera clase para empezar</p>
+            <button class="btn btn-primary" onclick="showCreateClassModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nueva Clase
+            </button>
+          </div>
+        `;
+                return;
+            }
+
+            grid.innerHTML = classes.map(c => `
+        <div class="class-card" onclick="openClass('${c.id}')">
+          <div class="class-card-header">
+            <div class="class-card-name">${c.name}</div>
+            <div class="class-card-count">${(c.students || []).length} alumnos</div>
+          </div>
+          <div class="class-card-body">
+            <p style="font-size:0.85rem;color:var(--gray-500)">${c.description || 'Sin descripción'}</p>
+          </div>
+          <div class="class-card-actions" onclick="event.stopPropagation()">
+            <a href="print-codes.html?class=${c.id}" class="btn btn-ghost btn-sm">${icons.printer}</a>
+            <button class="btn btn-ghost btn-sm" onclick="deleteClass('${c.id}')" style="color:var(--error)">${icons.trash}</button>
+          </div>
+        </div>
+      `).join('');
+        }
+
+        // Show/hide modals
+        window.showCreateClassModal = () => {
+            document.getElementById('createClassModal').classList.add('active');
+        };
+
+        window.showAddStudentModal = () => {
+            document.getElementById('addStudentModal').classList.add('active');
+        };
+
+        window.closeModal = (id) => {
+            document.getElementById(id).classList.remove('active');
+        };
+
+        // Click outside modal to close
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.classList.remove('active');
+            });
+        });
+
+        // Create class
+        window.handleCreateClass = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('createClassBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px"></div>';
+
+            const name = document.getElementById('className').value.trim();
+            const desc = document.getElementById('classDesc').value.trim();
+
+            try {
+                await addDoc(collection(db, 'classes'), {
+                    name,
+                    description: desc,
+                    teacherId: currentUser.uid,
+                    students: [],
+                    createdAt: serverTimestamp()
+                });
+
+                closeModal('createClassModal');
+                document.getElementById('className').value = '';
+                document.getElementById('classDesc').value = '';
+                showToast('Clase creada correctamente', 'success');
+                await loadClasses();
+            } catch (err) {
+                showToast('Error al crear la clase', 'error');
+                console.error(err);
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Crear Clase';
+        };
+
+        // Open class detail
+        window.openClass = async (classId) => {
+            currentClassId = classId;
+            const classDoc = await getDoc(doc(db, 'classes', classId));
+            if (!classDoc.exists()) return showToast('Clase no encontrada', 'error');
+
+            const data = classDoc.data();
+
+            document.getElementById('classesListView').style.display = 'none';
+            document.getElementById('classDetailView').style.display = 'block';
+            document.getElementById('classDetailName').textContent = data.name;
+            document.getElementById('classDetailInfo').textContent = `${(data.students || []).length} alumnos · ${data.description || ''}`;
+            document.getElementById('printCodesLink').href = `print-codes.html?class=${classId}`;
+
+            renderStudents(data.students || []);
+        };
+
+        function renderStudents(students) {
+            const list = document.getElementById('studentList');
+
+            if (students.length === 0) {
+                list.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="50" height="50"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            <h3>Sin alumnos</h3>
+            <p>Añade alumnos a esta clase</p>
+          </div>
+        `;
+                return;
+            }
+
+            list.innerHTML = students.map((s, i) => `
+        <li class="student-item">
+          <div class="student-info">
+            <div class="student-avatar">${s.name.charAt(0).toUpperCase()}</div>
+            <div>
+              <div class="student-name">${s.name}</div>
+              <div class="student-code">Código #${s.codeNumber}</div>
+            </div>
+          </div>
+          <div class="student-actions">
+            <button class="btn btn-ghost btn-sm" onclick="removeStudent(${i})" style="color:var(--error)">
+              ${icons.trash}
+            </button>
+          </div>
+        </li>
+      `).join('');
+        }
+
+        window.showClassesList = () => {
+            document.getElementById('classesListView').style.display = 'block';
+            document.getElementById('classDetailView').style.display = 'none';
+            currentClassId = null;
+        };
+
+        // Add single student
+        window.handleAddStudent = async (e) => {
+            e.preventDefault();
+            if (!currentClassId) return;
+
+            const name = document.getElementById('studentName').value.trim();
+            if (!name) return;
+
+            const classDoc = await getDoc(doc(db, 'classes', currentClassId));
+            const data = classDoc.data();
+            const students = data.students || [];
+
+            // Assign code number (next available)
+            const usedCodes = students.map(s => s.codeNumber);
+            let codeNumber = 0;
+            while (usedCodes.includes(codeNumber)) codeNumber++;
+
+            const newStudent = {
+                id: generateId(),
+                name,
+                codeNumber
+            };
+
+            students.push(newStudent);
+            await updateDoc(doc(db, 'classes', currentClassId), { students });
+
+            document.getElementById('studentName').value = '';
+            closeModal('addStudentModal');
+            showToast(`${name} añadido`, 'success');
+            renderStudents(students);
+            document.getElementById('classDetailInfo').textContent = `${students.length} alumnos · ${data.description || ''}`;
+        };
+
+        // Bulk add students
+        window.handleBulkAdd = async () => {
+            if (!currentClassId) return;
+
+            const text = document.getElementById('bulkStudents').value.trim();
+            if (!text) return;
+
+            const names = text.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+            if (names.length === 0) return;
+
+            const classDoc = await getDoc(doc(db, 'classes', currentClassId));
+            const data = classDoc.data();
+            const students = data.students || [];
+
+            const usedCodes = new Set(students.map(s => s.codeNumber));
+            let nextCode = 0;
+
+            for (const name of names) {
+                while (usedCodes.has(nextCode)) nextCode++;
+                students.push({
+                    id: generateId(),
+                    name,
+                    codeNumber: nextCode
+                });
+                usedCodes.add(nextCode);
+                nextCode++;
+            }
+
+            await updateDoc(doc(db, 'classes', currentClassId), { students });
+
+            document.getElementById('bulkStudents').value = '';
+            closeModal('addStudentModal');
+            showToast(`${names.length} alumnos añadidos`, 'success');
+            renderStudents(students);
+            document.getElementById('classDetailInfo').textContent = `${students.length} alumnos · ${data.description || ''}`;
+        };
+
+        // Remove student
+        window.removeStudent = async (index) => {
+            if (!currentClassId) return;
+            if (!confirm('¿Eliminar este alumno?')) return;
+
+            const classDoc = await getDoc(doc(db, 'classes', currentClassId));
+            const data = classDoc.data();
+            const students = data.students || [];
+            const removed = students.splice(index, 1);
+
+            await updateDoc(doc(db, 'classes', currentClassId), { students });
+            showToast(`${removed[0].name} eliminado`, 'success');
+            renderStudents(students);
+            document.getElementById('classDetailInfo').textContent = `${students.length} alumnos · ${data.description || ''}`;
+        };
+
+        // Delete class
+        window.deleteClass = async (classId) => {
+            if (!confirm('¿Eliminar esta clase y todos sus alumnos?')) return;
+
+            await deleteDoc(doc(db, 'classes', classId));
+            showToast('Clase eliminada', 'success');
+            await loadClasses();
+        };
+    </script>
+</body>
+
+</html>

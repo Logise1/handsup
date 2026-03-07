@@ -1,0 +1,75 @@
+/* ===== Codes Printing Styles ===== */
+
+.codes-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.code-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    text-align: center;
+    transition: all var(--transition-base);
+}
+
+.code-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.code-canvas-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.code-student-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--gray-700);
+}
+
+/* Print Styles */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .print-area,
+    .print-area * {
+        visibility: visible;
+    }
+
+    .print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    .print-codes-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        page-break-inside: auto;
+    }
+
+    .print-code-item {
+        text-align: center;
+        page-break-inside: avoid;
+        padding: 8px;
+        border: 1px solid #eee;
+    }
+
+    .print-code-item canvas {
+        max-width: 100%;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+}

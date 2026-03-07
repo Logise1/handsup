@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HandsUp — Partida en Curso</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/game.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✋</text></svg>">
+</head>
+
+<body>
+    <div class="game-page">
+
+        <!-- LOBBY SCREEN -->
+        <div id="lobbyScreen" class="game-lobby">
+            <div class="lobby-brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+                    <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2" />
+                    <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" />
+                    <path
+                        d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 13" />
+                </svg>
+                Hands<span class="text-gradient">Up</span>
+            </div>
+
+            <div class="lobby-pin-box">
+                <div class="lobby-pin-label">PIN de la Partida</div>
+                <div class="lobby-pin" id="gamePin">------</div>
+            </div>
+
+            <div class="lobby-info" id="lobbyInfo">Preparando partida...</div>
+
+            <div class="lobby-count" id="lobbyCount">0</div>
+            <div style="color:var(--gray-400);margin-bottom:12px">jugadores listos</div>
+
+            <div class="lobby-players" id="lobbyPlayers"></div>
+
+            <div class="scan-instruction">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                    <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                    <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                    <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                    <rect x="7" y="7" width="10" height="10" />
+                </svg>
+                <div class="scan-instruction-text">Abre el escáner en tu móvil para registrar respuestas</div>
+                <div class="scan-instruction-url" id="scanUrl">scan-mobile.html</div>
+            </div>
+
+            <button class="lobby-start-btn" id="startGameBtn" onclick="startGame()">
+                🚀 Comenzar Partida
+            </button>
+        </div>
+
+        <!-- GET READY SCREEN -->
+        <div id="getReadyScreen" class="get-ready" style="display:none">
+            <div class="get-ready-text">¡Prepárate!</div>
+            <div class="get-ready-count" id="readyCount">3</div>
+        </div>
+
+        <!-- QUESTION SCREEN -->
+        <div id="questionScreen" class="game-question-screen" style="display:none">
+            <div class="game-top-bar">
+                <div class="game-question-num" id="questionNum">Pregunta 1 / 10</div>
+                <div class="game-timer">
+                    <div class="timer-circle" id="timerCircle">
+                        <span id="timerValue">20</span>
+                    </div>
+                </div>
+                <div class="game-responses">
+                    <span id="responseCount">0</span> / <span id="totalPlayers">0</span> respuestas
+                </div>
+            </div>
+
+            <div class="game-question-area">
+                <div class="game-question-text" id="questionText">¿Pregunta?</div>
+            </div>
+
+            <div class="game-answers" id="answersGrid">
+                <!-- Answers rendered here -->
+            </div>
+
+            <div style="text-align:center;padding-bottom:20px">
+                <button class="btn btn-secondary" onclick="skipTimer()" id="skipTimerBtn"
+                    style="border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.6)">
+                    Cerrar respuestas →
+                </button>
+            </div>
+        </div>
+
+        <!-- RESULTS SCREEN (after each question) -->
+        <div id="resultsScreen" class="scoreboard-screen" style="display:none">
+            <h2 class="scoreboard-title" id="resultsTitle">Resultados</h2>
+            <p class="scoreboard-subtitle" id="resultsQuestion"></p>
+
+            <div class="results-chart" id="resultsChart">
+                <!-- Bars rendered here -->
+            </div>
+
+            <div style="margin-bottom:24px">
+                <span class="badge badge-success" id="correctAnswerBadge" style="font-size:0.9rem;padding:8px 20px">
+                    ✓ Respuesta correcta: -
+                </span>
+            </div>
+
+            <button class="btn btn-primary btn-lg scoreboard-next-btn" onclick="showScoreboard()">
+                Ver Clasificación →
+            </button>
+        </div>
+
+        <!-- SCOREBOARD SCREEN -->
+        <div id="scoreboardScreen" class="scoreboard-screen" style="display:none">
+            <h2 class="scoreboard-title">🏆 Clasificación</h2>
+            <p class="scoreboard-subtitle" id="scoreboardSubtitle">Pregunta 1 / 10</p>
+
+            <ul class="scoreboard-list" id="scoreboardList">
+                <!-- Items rendered here -->
+            </ul>
+
+            <button class="btn btn-primary btn-lg scoreboard-next-btn" onclick="nextQuestion()" id="nextQuestionBtn">
+                Siguiente Pregunta →
+            </button>
+        </div>
+
+        <!-- FINAL SCREEN -->
+        <div id="finalScreen" class="final-screen" style="display:none">
+            <h2 style="font-size:3rem;font-weight:900;margin-bottom:8px;animation: fadeInDown 0.5s ease">🎉 ¡Fin del
+                Quiz!</h2>
+            <p style="color:var(--gray-400);font-size:1.2rem;animation: fadeInDown 0.5s ease 0.1s both"
+                id="finalQuizTitle"></p>
+
+            <div class="final-podium" id="podium">
+                <!-- Podium rendered here -->
+            </div>
+
+            <ul class="scoreboard-list" id="finalScoreboard" style="max-width:600px;width:100%;margin-top:24px">
+                <!-- Full scoreboard -->
+            </ul>
+
+            <div style="margin-top:40px;display:flex;gap:12px;animation: fadeInUp 0.5s ease 1s both">
+                <a href="dashboard.html" class="btn btn-secondary btn-lg"
+                    style="border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7)">
+                    Volver al Dashboard
+                </a>
+                <button class="btn btn-primary btn-lg" onclick="location.reload()">
+                    Jugar de nuevo
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { auth, db, onAuthStateChanged, doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from './js/firebase-init.js';
+        import { showToast, generateGamePin } from './js/utils.js';
+
+        const params = new URLSearchParams(window.location.search);
+        const quizId = params.get('quiz');
+        const classId = params.get('class');
+
+        if (!quizId || !classId) {
+            alert('Faltan parámetros. Vuelve al dashboard.');
+            window.location.href = 'dashboard.html';
+        }
+
+        let quiz = null;
+        let classData = null;
+        let students = [];
+        let scores = {};
+        let currentQuestion = 0;
+        let responses = {}; // { studentId: { answer, timestamp } }
+        let timerInterval = null;
+        let timeLeft = 0;
+        let gameId = null;
+        let gamePin = '';
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) return window.location.href = 'login.html';
+            await initGame(user);
+        });
+
+        async function initGame(user) {
+            // Load quiz
+            const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
+            if (!quizDoc.exists()) {
+                alert('Quiz no encontrado');
+                return window.location.href = 'dashboard.html';
+            }
+            quiz = quizDoc.data();
+
+            // Load class
+            const classDoc = await getDoc(doc(db, 'classes', classId));
+            if (!classDoc.exists()) {
+                alert('Clase no encontrada');
+                return window.location.href = 'dashboard.html';
+            }
+            classData = classDoc.data();
+            students = classData.students || [];
+
+            // Initialize scores
+            students.forEach(s => {
+                scores[s.id] = { name: s.name, score: 0, streak: 0 };
+            });
+
+            // Generate game PIN and create game document
+            gamePin = generateGamePin();
+
+            const gameRef = await addDoc(collection(db, 'games'), {
+                quizId,
+                classId,
+                teacherId: user.uid,
+                pin: gamePin,
+                quizTitle: quiz.title,
+                className: classData.name,
+                status: 'lobby',
+                currentQuestion: -1,
+                responses: {},
+                createdAt: serverTimestamp()
+            });
+            gameId = gameRef.id;
+
+            // Show lobby
+            document.getElementById('gamePin').textContent = gamePin;
+            document.getElementById('lobbyInfo').textContent = `Quiz: ${quiz.title} · ${quiz.questions.length} preguntas`;
+            document.getElementById('lobbyCount').textContent = students.length;
+            document.getElementById('scanUrl').textContent = `scan-mobile.html?game=${gameId}`;
+
+            // Show players from class
+            const playersContainer = document.getElementById('lobbyPlayers');
+            playersContainer.innerHTML = students.map((s, i) => `
+        <div class="lobby-player" style="animation-delay:${i * 0.05}s">${s.name}</div>
+      `).join('');
+
+            document.getElementById('totalPlayers').textContent = students.length;
+        }
+
+        // Start game
+        window.startGame = async () => {
+            if (!quiz || students.length === 0) return;
+
+            document.getElementById('lobbyScreen').style.display = 'none';
+            document.getElementById('getReadyScreen').style.display = 'flex';
+
+            // Countdown 3-2-1
+            const countEl = document.getElementById('readyCount');
+            for (let i = 3; i >= 1; i--) {
+                countEl.textContent = i;
+                countEl.style.animation = 'none';
+                requestAnimationFrame(() => {
+                    countEl.style.animation = 'scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                });
+                await sleep(1000);
+            }
+
+            countEl.textContent = '🚀';
+            await sleep(500);
+
+            // Start first question
+            showQuestion(0);
+        };
+
+        function showQuestion(index) {
+            currentQuestion = index;
+            responses = {};
+
+            const q = quiz.questions[index];
+            const labels = ['A', 'B', 'C', 'D'];
+
+            document.getElementById('getReadyScreen').style.display = 'none';
+            document.getElementById('resultsScreen').style.display = 'none';
+            document.getElementById('scoreboardScreen').style.display = 'none';
+            document.getElementById('questionScreen').style.display = 'flex';
+
+            document.getElementById('questionNum').textContent = `Pregunta ${index + 1} / ${quiz.questions.length}`;
+            document.getElementById('questionText').textContent = q.question;
+            document.getElementById('responseCount').textContent = '0';
+
+            // Re-trigger animation
+            const qText = document.getElementById('questionText');
+            qText.style.animation = 'none';
+            requestAnimationFrame(() => qText.style.animation = 'fadeInUp 0.5s ease');
+
+            // Render answers
+            const grid = document.getElementById('answersGrid');
+            grid.innerHTML = q.options.map((opt, i) => `
+        <div class="game-answer" id="answer-${i}" style="animation-delay:${0.1 + i * 0.1}s">
+          <div class="game-answer-icon">${labels[i]}</div>
+          <span>${opt}</span>
+        </div>
+      `).join('');
+
+            // Start timer
+            timeLeft = quiz.timePerQuestion || 20;
+            document.getElementById('timerValue').textContent = timeLeft;
+            document.getElementById('timerCircle').className = 'timer-circle';
+
+            // Update game doc
+            if (gameId) {
+                updateDoc(doc(db, 'games', gameId), {
+                    status: 'question',
+                    currentQuestion: index,
+                    responses: {},
+                    questionStartedAt: serverTimestamp()
+                }).catch(console.error);
+            }
+
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timerValue').textContent = timeLeft;
+
+                if (timeLeft <= 5) {
+                    document.getElementById('timerCircle').className = 'timer-circle danger';
+                } else if (timeLeft <= 10) {
+                    document.getElementById('timerCircle').className = 'timer-circle warning';
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endQuestion();
+                }
+            }, 1000);
+        }
+
+        window.skipTimer = () => {
+            clearInterval(timerInterval);
+            endQuestion();
+        };
+
+        // Register response from scan page (called via game document updates)
+        window.registerResponse = (studentId, answer) => {
+            if (responses[studentId]) return; // Already responded
+
+            responses[studentId] = {
+                answer,
+                timeLeft,
+                timestamp: Date.now()
+            };
+
+            document.getElementById('responseCount').textContent = Object.keys(responses).length;
+
+            // Check if all responded
+            if (Object.keys(responses).length >= students.length) {
+                clearInterval(timerInterval);
+                endQuestion();
+            }
+        };
+
+        // Poll for responses from Firestore
+        let pollInterval = null;
+        function startPolling() {
+            pollInterval = setInterval(async () => {
+                if (!gameId) return;
+                try {
+                    const gameDoc = await getDoc(doc(db, 'games', gameId));
+                    const data = gameDoc.data();
+                    if (data.responses) {
+                        const newResponses = data.responses;
+                        for (const [studentId, resp] of Object.entries(newResponses)) {
+                            if (!responses[studentId]) {
+                                window.registerResponse(studentId, resp.answer);
+                            }
+                        }
+                    }
+                } catch (e) { /* ignore polling errors */ }
+            }, 1500);
+        }
+        startPolling();
+
+        function endQuestion() {
+            clearInterval(timerInterval);
+
+            const q = quiz.questions[currentQuestion];
+            const correctIdx = q.correctIndex;
+            const labels = ['A', 'B', 'C', 'D'];
+
+            // Highlight correct answer, dim wrong ones
+            for (let i = 0; i < 4; i++) {
+                const el = document.getElementById(`answer-${i}`);
+                if (!el) continue;
+                if (i === correctIdx) {
+                    el.classList.add('correct-highlight');
+                } else {
+                    el.classList.add('dimmed');
+                }
+            }
+
+            // Calculate scores
+            const answeredStudents = Object.entries(responses);
+            for (const [studentId, resp] of answeredStudents) {
+                if (resp.answer === labels[correctIdx]) {
+                    // Score based on time remaining
+                    const timeBonus = resp.timeLeft / (quiz.timePerQuestion || 20);
+                    const points = Math.round((quiz.pointsPerQuestion || 1000) * (0.5 + 0.5 * timeBonus));
+                    if (scores[studentId]) {
+                        scores[studentId].score += points;
+                        scores[studentId].streak++;
+                    }
+                } else {
+                    if (scores[studentId]) {
+                        scores[studentId].streak = 0;
+                    }
+                }
+            }
+
+            // Update game document
+            if (gameId) {
+                updateDoc(doc(db, 'games', gameId), { status: 'results' }).catch(console.error);
+            }
+
+            // Show results after a brief pause
+            setTimeout(() => showResults(q, correctIdx, labels), 2000);
+        }
+
+        function showResults(question, correctIdx, labels) {
+            document.getElementById('questionScreen').style.display = 'none';
+            document.getElementById('resultsScreen').style.display = 'flex';
+
+            document.getElementById('resultsTitle').textContent = `Pregunta ${currentQuestion + 1}`;
+            document.getElementById('resultsQuestion').textContent = question.question;
+            document.getElementById('correctAnswerBadge').textContent = `✓ Respuesta correcta: ${labels[correctIdx]} - ${question.options[correctIdx]}`;
+
+            // Count answers per option
+            const counts = [0, 0, 0, 0];
+            for (const [_, resp] of Object.entries(responses)) {
+                const idx = labels.indexOf(resp.answer);
+                if (idx >= 0) counts[idx]++;
+            }
+
+            const maxCount = Math.max(...counts, 1);
+            const chart = document.getElementById('resultsChart');
+            const classes = ['a', 'b', 'c', 'd'];
+
+            chart.innerHTML = counts.map((count, i) => {
+                const height = Math.max(30, (count / maxCount) * 180);
+                return `
+          <div class="results-bar ${classes[i]}" style="height:${height}px">
+            <div class="results-bar-label">${labels[i]}</div>
+            <div class="results-bar-count">${count}</div>
+          </div>
+        `;
+            }).join('');
+        }
+
+        window.showScoreboard = () => {
+            document.getElementById('resultsScreen').style.display = 'none';
+            document.getElementById('scoreboardScreen').style.display = 'flex';
+
+            document.getElementById('scoreboardSubtitle').textContent =
+                `Pregunta ${currentQuestion + 1} / ${quiz.questions.length}`;
+
+            // Sort by score
+            const sorted = Object.entries(scores)
+                .map(([id, data]) => ({ id, ...data }))
+                .sort((a, b) => b.score - a.score);
+
+            const list = document.getElementById('scoreboardList');
+            list.innerHTML = sorted.slice(0, 10).map((player, i) => `
+        <li class="scoreboard-item" style="animation-delay:${i * 0.08}s">
+          <div class="scoreboard-rank">${i + 1}</div>
+          <div class="scoreboard-name">${player.name}</div>
+          <div class="scoreboard-score">
+            ${player.score.toLocaleString()}
+            <span class="scoreboard-points-label">pts</span>
+          </div>
+        </li>
+      `).join('');
+
+            // Change button text if last question
+            const nextBtn = document.getElementById('nextQuestionBtn');
+            if (currentQuestion + 1 >= quiz.questions.length) {
+                nextBtn.textContent = '🎉 Ver Resultado Final';
+                nextBtn.onclick = showFinalScreen;
+            } else {
+                nextBtn.textContent = 'Siguiente Pregunta →';
+                nextBtn.onclick = window.nextQuestion;
+            }
+        };
+
+        window.nextQuestion = () => {
+            if (currentQuestion + 1 >= quiz.questions.length) {
+                showFinalScreen();
+                return;
+            }
+            showQuestion(currentQuestion + 1);
+        };
+
+        function showFinalScreen() {
+            clearInterval(pollInterval);
+
+            document.getElementById('scoreboardScreen').style.display = 'none';
+            document.getElementById('finalScreen').style.display = 'flex';
+            document.getElementById('finalQuizTitle').textContent = quiz.title;
+
+            // Sort final scores
+            const sorted = Object.entries(scores)
+                .map(([id, data]) => ({ id, ...data }))
+                .sort((a, b) => b.score - a.score);
+
+            // Podium (top 3)
+            const podium = document.getElementById('podium');
+            if (sorted.length >= 3) {
+                const places = [sorted[1], sorted[0], sorted[2]]; // 2nd, 1st, 3rd (visual order)
+                const barClasses = ['second', 'first', 'third'];
+                const medals = ['🥈', '🥇', '🥉'];
+
+                podium.innerHTML = places.map((p, i) => `
+          <div class="podium-place">
+            <div class="podium-avatar">${p.name.charAt(0).toUpperCase()}</div>
+            <div class="podium-name">${p.name}</div>
+            <div class="podium-score">${p.score.toLocaleString()} pts</div>
+            <div class="podium-bar ${barClasses[i]}">${medals[i]}</div>
+          </div>
+        `).join('');
+            } else {
+                podium.innerHTML = '';
+            }
+
+            // Full scoreboard
+            const finalList = document.getElementById('finalScoreboard');
+            finalList.innerHTML = sorted.map((player, i) => `
+        <li class="scoreboard-item" style="animation-delay:${0.5 + i * 0.08}s">
+          <div class="scoreboard-rank">${i + 1}</div>
+          <div class="scoreboard-name">${player.name}</div>
+          <div class="scoreboard-score">
+            ${player.score.toLocaleString()}
+            <span class="scoreboard-points-label">pts</span>
+          </div>
+        </li>
+      `).join('');
+
+            // Save game results
+            if (gameId) {
+                updateDoc(doc(db, 'games', gameId), {
+                    status: 'finished',
+                    finalScores: sorted,
+                    finishedAt: serverTimestamp()
+                }).catch(console.error);
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+
+</html>

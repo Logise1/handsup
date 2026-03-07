@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HandsUp — Iniciar Sesión</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✋</text></svg>">
+</head>
+
+<body>
+    <div class="auth-page">
+        <div class="auth-card" id="authCard">
+            <div class="auth-logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+                    <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2" />
+                    <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" />
+                    <path
+                        d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 13" />
+                </svg>
+                <span>Hands<span class="text-gradient">Up</span></span>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm">
+                <h2 class="auth-title">Bienvenido de vuelta</h2>
+                <p class="auth-subtitle">Inicia sesión para acceder a tu panel</p>
+
+                <div class="auth-error" id="loginError"></div>
+
+                <form class="auth-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" class="form-input" placeholder="tu@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="loginPassword">Contraseña</label>
+                        <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg" id="loginBtn">
+                        Iniciar Sesión
+                    </button>
+                </form>
+
+                <p class="auth-switch">
+                    ¿No tienes cuenta? <a onclick="showRegister()">Crear cuenta</a>
+                </p>
+            </div>
+
+            <!-- Register Form -->
+            <div id="registerForm" style="display:none">
+                <h2 class="auth-title">Crear cuenta</h2>
+                <p class="auth-subtitle">Regístrate para empezar a crear quizzes</p>
+
+                <div class="auth-error" id="registerError"></div>
+
+                <form class="auth-form" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="regName">Nombre completo</label>
+                        <input type="text" id="regName" class="form-input" placeholder="Tu nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="regEmail">Email</label>
+                        <input type="email" id="regEmail" class="form-input" placeholder="tu@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="regPassword">Contraseña</label>
+                        <input type="password" id="regPassword" class="form-input" placeholder="Mínimo 6 caracteres"
+                            required minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg" id="registerBtn">
+                        Crear Cuenta
+                    </button>
+                </form>
+
+                <p class="auth-switch">
+                    ¿Ya tienes cuenta? <a onclick="showLogin()">Iniciar sesión</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, onAuthStateChanged, doc, setDoc, serverTimestamp } from './js/firebase-init.js';
+
+        // Check if already logged in
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.location.href = 'dashboard.html';
+            }
+        });
+
+        // Check hash for register
+        if (window.location.hash === '#register') {
+            showRegister();
+        }
+
+        window.showLogin = function () {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('authCard').style.animation = 'none';
+            requestAnimationFrame(() => {
+                document.getElementById('authCard').style.animation = 'scaleIn 0.3s ease';
+            });
+        }
+
+        window.showRegister = function () {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('authCard').style.animation = 'none';
+            requestAnimationFrame(() => {
+                document.getElementById('authCard').style.animation = 'scaleIn 0.3s ease';
+            });
+        }
+
+        window.handleLogin = async function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const errorEl = document.getElementById('loginError');
+
+            btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px"></div> Iniciando...';
+            btn.disabled = true;
+            errorEl.classList.remove('visible');
+
+            try {
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                await signInWithEmailAndPassword(auth, email, password);
+                window.location.href = 'dashboard.html';
+            } catch (err) {
+                let message = 'Error al iniciar sesión';
+                if (err.code === 'auth/invalid-credential') message = 'Email o contraseña incorrectos';
+                if (err.code === 'auth/user-not-found') message = 'No existe una cuenta con este email';
+                if (err.code === 'auth/wrong-password') message = 'Contraseña incorrecta';
+                if (err.code === 'auth/too-many-requests') message = 'Demasiados intentos. Intenta más tarde';
+
+                errorEl.textContent = message;
+                errorEl.classList.add('visible');
+                btn.innerHTML = 'Iniciar Sesión';
+                btn.disabled = false;
+            }
+        }
+
+        window.handleRegister = async function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('registerBtn');
+            const errorEl = document.getElementById('registerError');
+
+            btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px"></div> Creando...';
+            btn.disabled = true;
+            errorEl.classList.remove('visible');
+
+            try {
+                const name = document.getElementById('regName').value;
+                const email = document.getElementById('regEmail').value;
+                const password = document.getElementById('regPassword').value;
+
+                const userCred = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCred.user, { displayName: name });
+
+                // Create user document in Firestore
+                await setDoc(doc(db, 'users', userCred.user.uid), {
+                    name: name,
+                    email: email,
+                    createdAt: serverTimestamp()
+                });
+
+                window.location.href = 'dashboard.html';
+            } catch (err) {
+                let message = 'Error al crear la cuenta';
+                if (err.code === 'auth/email-already-in-use') message = 'Ya existe una cuenta con este email';
+                if (err.code === 'auth/weak-password') message = 'La contraseña debe tener al menos 6 caracteres';
+
+                errorEl.textContent = message;
+                errorEl.classList.add('visible');
+                btn.innerHTML = 'Crear Cuenta';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

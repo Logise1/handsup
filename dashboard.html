@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HandsUp — Dashboard</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✋</text></svg>">
+</head>
+
+<body>
+    <div id="navContainer"></div>
+
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Principal</div>
+                <a href="dashboard.html" class="sidebar-link active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="my-classes.html" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    Mis Clases
+                </a>
+                <a href="my-quizzes.html" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <path d="M12 18v-6" />
+                        <path d="M9.5 15.5 12 18l2.5-2.5" />
+                    </svg>
+                    Mis Quizzes
+                </a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Acciones</div>
+                <a href="create-quiz.html" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <path
+                            d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z" />
+                        <circle cx="9" cy="14" r="1" />
+                        <circle cx="15" cy="14" r="1" />
+                        <path d="M9 18h6" />
+                    </svg>
+                    Crear Quiz con IA
+                </a>
+                <a href="print-codes.html" class="sidebar-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="20" height="20">
+                        <polyline points="6 9 6 2 18 2 18 9" />
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                        <rect x="6" y="14" width="12" height="8" />
+                    </svg>
+                    Imprimir Códigos
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header animate-fade-in-up">
+                <div>
+                    <h1 class="page-title" id="welcomeTitle">Dashboard</h1>
+                    <p class="page-subtitle" id="welcomeSubtitle">Bienvenido a HandsUp</p>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid stagger" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22"
+                            height="22">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                    </div>
+                    <div class="stat-value" id="statClasses">0</div>
+                    <div class="stat-label">Clases</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22"
+                            height="22">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                        </svg>
+                    </div>
+                    <div class="stat-value" id="statStudents">0</div>
+                    <div class="stat-label">Alumnos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon yellow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22"
+                            height="22">
+                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                    </div>
+                    <div class="stat-value" id="statQuizzes">0</div>
+                    <div class="stat-label">Quizzes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22"
+                            height="22">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                    </div>
+                    <div class="stat-value" id="statGames">0</div>
+                    <div class="stat-label">Partidas jugadas</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="dashboard-section animate-fade-in-up" style="animation-delay:0.2s">
+                <div class="dashboard-section-header">
+                    <h3 class="dashboard-section-title">Acciones rápidas</h3>
+                </div>
+                <div class="quick-actions">
+                    <a href="my-classes.html#new" class="quick-action">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Nueva Clase
+                    </a>
+                    <a href="create-quiz.html" class="quick-action">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+                            <path
+                                d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z" />
+                            <circle cx="9" cy="14" r="1" />
+                            <circle cx="15" cy="14" r="1" />
+                            <path d="M9 18h6" />
+                        </svg>
+                        Crear Quiz con IA
+                    </a>
+                    <a href="print-codes.html" class="quick-action">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+                            <polyline points="6 9 6 2 18 2 18 9" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                            <rect x="6" y="14" width="12" height="8" />
+                        </svg>
+                        Imprimir Códigos
+                    </a>
+                    <a href="#" class="quick-action" id="quickPlayBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                        Iniciar Partida
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Quizzes -->
+            <div class="dashboard-section animate-fade-in-up" style="animation-delay:0.3s">
+                <div class="dashboard-section-header">
+                    <h3 class="dashboard-section-title">Quizzes recientes</h3>
+                    <a href="my-quizzes.html" class="btn btn-ghost btn-sm">Ver todos →</a>
+                </div>
+                <div class="cards-grid" id="recentQuizzes">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="60"
+                            height="60">
+                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        <h3>No hay quizzes</h3>
+                        <p>Crea tu primer quiz con IA</p>
+                        <a href="create-quiz.html" class="btn btn-primary">Crear Quiz</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth, db, onAuthStateChanged, signOut, collection, getDocs, query, where, orderBy } from './js/firebase-init.js';
+        import { getNavbarHTML, showToast, icons } from './js/utils.js';
+
+        // Insert navbar
+        document.getElementById('navContainer').innerHTML = getNavbarHTML('dashboard');
+
+        // Logout handler
+        window.handleLogout = async () => {
+            await signOut(auth);
+            window.location.href = 'login.html';
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) return window.location.href = 'login.html';
+
+            const name = user.displayName || user.email;
+            document.getElementById('welcomeTitle').textContent = `Hola, ${name.split(' ')[0]} 👋`;
+            document.getElementById('welcomeSubtitle').textContent = 'Aquí tienes un resumen de tu actividad';
+
+            // Load stats
+            try {
+                const classesSnap = await getDocs(query(collection(db, 'classes'), where('teacherId', '==', user.uid)));
+                const quizzesSnap = await getDocs(query(collection(db, 'quizzes'), where('teacherId', '==', user.uid)));
+                const gamesSnap = await getDocs(query(collection(db, 'games'), where('teacherId', '==', user.uid)));
+
+                let totalStudents = 0;
+                classesSnap.forEach(doc => {
+                    const data = doc.data();
+                    totalStudents += (data.students || []).length;
+                });
+
+                document.getElementById('statClasses').textContent = classesSnap.size;
+                document.getElementById('statStudents').textContent = totalStudents;
+                document.getElementById('statQuizzes').textContent = quizzesSnap.size;
+                document.getElementById('statGames').textContent = gamesSnap.size;
+
+                // Show recent quizzes
+                if (quizzesSnap.size > 0) {
+                    const quizzes = [];
+                    quizzesSnap.forEach(d => quizzes.push({ id: d.id, ...d.data() }));
+                    quizzes.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+                    const recentContainer = document.getElementById('recentQuizzes');
+                    recentContainer.innerHTML = quizzes.slice(0, 3).map(q => `
+            <div class="quiz-card">
+              <div class="quiz-card-top">
+                <h4 class="quiz-card-title">${q.title || 'Sin título'}</h4>
+                <span class="badge badge-primary">${(q.questions || []).length} preguntas</span>
+              </div>
+              <div class="quiz-card-meta">
+                <span>${icons.clock} ${q.timePerQuestion || 20}s por pregunta</span>
+              </div>
+              <div class="quiz-card-actions">
+                <a href="game-host.html?quiz=${q.id}" class="btn btn-primary btn-sm">${icons.play} Jugar</a>
+                <a href="create-quiz.html?edit=${q.id}" class="btn btn-secondary btn-sm">${icons.edit} Editar</a>
+              </div>
+            </div>
+          `).join('');
+                }
+
+                // Quick play button
+                document.getElementById('quickPlayBtn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (quizzesSnap.size === 0) {
+                        showToast('Primero crea un quiz', 'warning');
+                        return;
+                    }
+                    window.location.href = 'my-quizzes.html';
+                });
+
+            } catch (err) {
+                console.error('Error loading dashboard:', err);
+            }
+        });
+    </script>
+</body>
+
+</html>
