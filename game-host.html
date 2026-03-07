@@ -148,18 +148,89 @@
                 <!-- Full scoreboard -->
             </ul>
 
-            <div style="margin-top:40px;display:flex;gap:12px;animation: fadeInUp 0.5s ease 1s both">
-                <a href="dashboard.html" class="btn btn-secondary btn-lg"
-                    style="border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7)">
-                    Volver al Dashboard
-                </a>
-                <button class="btn btn-primary btn-lg" onclick="location.reload()">
-                    Jugar de nuevo
-                </button>
+            <div id="finalScores" class="game-final" style="display:none;">
+                <h2 style="font-size:2.5rem; text-align:center; margin-bottom:40px">Podio Final</h2>
+                <div class="podium" id="podiumArea"></div>
+                <div style="margin-top:40px;display:flex;gap:12px;animation: fadeInUp 0.5s ease 1s both">
+                    <a href="dashboard.html" class="btn btn-secondary btn-lg"
+                        style="border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7)">
+                        Volver al Dashboard
+                    </a>
+                    <button class="btn btn-primary btn-lg" onclick="location.reload()">
+                        Jugar de nuevo
+                    </button>
+                </div>
             </div>
         </div>
 
     </div>
+
+    <!-- Panel top right for student status -->
+    <div id="studentStatusPanel" class="student-status-panel" style="display:none">
+        <div class="panel-header">Alumnos <span id="panelRespCount">0</span>/<span id="panelTotalCount">0</span></div>
+        <div class="student-status-grid" id="studentStatusGrid"></div>
+    </div>
+
+    <style>
+        .student-status-panel {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            width: 260px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px;
+            color: white;
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-header {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            color: var(--gray-300);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .student-status-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .student-pill {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 0.85rem;
+            color: var(--gray-300);
+            transition: all 0.3s ease;
+        }
+
+        .student-pill.answered {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .student-pill svg {
+            opacity: 0;
+            stroke: currentColor;
+        }
+
+        .student-pill.answered svg {
+            opacity: 1;
+        }
+    </style>
 
     <script type="module">
         import { auth, db, onAuthStateChanged, doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from './js/firebase-init.js';
@@ -289,10 +360,23 @@
             document.getElementById('resultsScreen').style.display = 'none';
             document.getElementById('scoreboardScreen').style.display = 'none';
             document.getElementById('questionScreen').style.display = 'flex';
+            document.getElementById('studentStatusPanel').style.display = 'block'; // Show panel
 
             document.getElementById('questionNum').textContent = `Pregunta ${index + 1} / ${quiz.questions.length}`;
             document.getElementById('questionText').textContent = q.question;
             document.getElementById('responseCount').textContent = '0';
+
+            // Update student status panel
+            document.getElementById('panelRespCount').textContent = '0';
+            document.getElementById('panelTotalCount').textContent = students.length;
+            const studentStatusGrid = document.getElementById('studentStatusGrid');
+            studentStatusGrid.innerHTML = students.map(s => `
+                <div class="student-pill" id="pill-${s.id}">
+                    <span>${s.name}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
+                </div>
+            `).join('');
+
 
             // Re-trigger animation
             const qText = document.getElementById('questionText');
@@ -350,12 +434,26 @@
                 timeElapsed: firstResponseTime ? (Date.now() - firstResponseTime) / 1000 : 0
             };
 
-            document.getElementById('responseCount').textContent = Object.keys(responses).length;
+            const respCount = Object.keys(responses).length;
+            document.getElementById('responseCount').textContent = respCount;
+            document.getElementById('panelRespCount').textContent = respCount;
+
+            // Update pill
+            const pill = document.getElementById(`pill-${studentId}`);
+            if (pill) {
+                pill.classList.add('answered');
+            }
 
             // Check if all responded
-            if (Object.keys(responses).length >= students.length) {
+            if (respCount >= students.length) {
                 clearInterval(timerInterval);
-                endQuestion();
+                // Add a small delay before ending the question to allow UI to update
+                setTimeout(() => {
+                    // Ensure we are still on the question screen before ending
+                    if (document.getElementById('questionScreen').style.display !== 'none') {
+                        endQuestion();
+                    }
+                }, 1500);
             }
         };
 
@@ -382,6 +480,7 @@
 
         function endQuestion() {
             clearInterval(timerInterval);
+            document.getElementById('studentStatusPanel').style.display = 'none'; // Hide panel
 
             const q = quiz.questions[currentQuestion];
             const correctIdx = q.correctIndex;

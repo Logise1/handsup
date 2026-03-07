@@ -383,13 +383,17 @@
 
         function tick() {
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                // Set canvas sizes
-                hiddenCanvas.width = video.videoWidth;
-                hiddenCanvas.height = video.videoHeight;
+                // Set canvas sizes for UI tracking
                 overlayCanvas.width = video.clientWidth;
                 overlayCanvas.height = video.clientHeight;
 
-                // Draw video frame to hidden canvas for processing
+                // Process at a lower resolution for FAST JSQR performance
+                const maxProcessWidth = 640;
+                const scale = video.videoWidth > maxProcessWidth ? maxProcessWidth / video.videoWidth : 1;
+                hiddenCanvas.width = video.videoWidth * scale;
+                hiddenCanvas.height = video.videoHeight * scale;
+
+                // Draw scaled video frame to hidden canvas
                 ctx.drawImage(video, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
 
                 if (isQuestionActive) {
@@ -398,28 +402,39 @@
                     // Clear previous overlays
                     overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
-                    let codeFoundCurrentFrame = false;
+                    let loopCount = 0;
 
-                    // Loop to find MULTIPLE QR codes in the same frame
-                    while (true) {
+                    // Loop to find MULTIPLE QR codes in the same frame smoothly
+                    while (loopCount++ < 10) {
                         const code = jsQR(imageData.data, imageData.width, imageData.height, {
                             inversionAttempts: "dontInvert"
                         });
 
                         if (!code) break; // No more QR codes found
 
-                        codeFoundCurrentFrame = true;
-                        processDetectedCode(code);
+                        // We must UN-SCALE the coordinates for the UI drawer & math
+                        const actualCode = {
+                            ...code,
+                            location: {
+                                topLeftCorner: { x: code.location.topLeftCorner.x / scale, y: code.location.topLeftCorner.y / scale },
+                                topRightCorner: { x: code.location.topRightCorner.x / scale, y: code.location.topRightCorner.y / scale },
+                                bottomLeftCorner: { x: code.location.bottomLeftCorner.x / scale, y: code.location.bottomLeftCorner.y / scale },
+                                bottomRightCorner: { x: code.location.bottomRightCorner.x / scale, y: code.location.bottomRightCorner.y / scale }
+                            }
+                        };
 
-                        // Erase the detected QR code from the imageData by painting a white box over its bounding rectangle
+                        processDetectedCode(actualCode);
+
+                        // Erase the detected QR code from the scaled imageData by painting a white box over its bounding rectangle
                         // so the jsQR algorithm can find the NEXT one in the same frame!
-                        const minX = Math.min(code.location.topLeftCorner.x, code.location.bottomLeftCorner.x);
-                        const maxX = Math.max(code.location.topRightCorner.x, code.location.bottomRightCorner.x);
-                        const minY = Math.min(code.location.topLeftCorner.y, code.location.topRightCorner.y);
-                        const maxY = Math.max(code.location.bottomLeftCorner.y, code.location.bottomRightCorner.y);
+                        const l = code.location;
+                        const minX = Math.min(l.topLeftCorner.x, l.bottomLeftCorner.x, l.topRightCorner.x, l.bottomRightCorner.x);
+                        const maxX = Math.max(l.topRightCorner.x, l.bottomRightCorner.x, l.topLeftCorner.x, l.bottomLeftCorner.x);
+                        const minY = Math.min(l.topLeftCorner.y, l.topRightCorner.y, l.bottomLeftCorner.y, l.bottomRightCorner.y);
+                        const maxY = Math.max(l.bottomLeftCorner.y, l.bottomRightCorner.y, l.topLeftCorner.y, l.topRightCorner.y);
 
                         // Apply padding to erase area safely
-                        const pad = 10;
+                        const pad = 15;
                         const startY = Math.max(0, Math.floor(minY) - pad);
                         const endY = Math.min(imageData.height, Math.ceil(maxY) + pad);
                         const startX = Math.max(0, Math.floor(minX) - pad);
@@ -435,8 +450,8 @@
                             }
                         }
                     }
-
-                    // Optional: remove flash if needed (handled inside processDetectedCode typically)
+                } else {
+                    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
                 }
             }
             requestAnimationFrame(tick);
